@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Climate Outlook 2026-2028 — Swan House Farm</title>
+<style>
+  :root {
+    --ink: #1c1c1c;
+    --ink-soft: #4a4a4a;
+    --ink-faint: #7a7a7a;
+    --paper: #faf8f3;
+    --paper-shade: #f1ede4;
+    --rule: #d8d2c4;
+    --accent: #6b4f2d;
+    --accent-soft: #f0e7d5;
+    --response-bg: #fffdf8;
+    --response-border: #c9bfa6;
+    --shadow: 0 2px 12px rgba(60, 50, 30, 0.08);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink); }
+  body {
+    font-family: "Charter", "Georgia", "Iowan Old Style", "Palatino Linotype", serif;
+    font-size: 18px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    padding: 0 0 140px 0;
+  }
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 56px 28px 0 28px;
+  }
+  header.brief-header {
+    margin-bottom: 56px;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 32px;
+  }
+  header.brief-header .kicker {
+    font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 14px;
+  }
+  header.brief-header h1 {
+    font-size: 36px;
+    line-height: 1.2;
+    margin: 0 0 16px 0;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  header.brief-header .meta {
+    color: var(--ink-faint);
+    font-size: 15px;
+    font-style: italic;
+  }
+  .intro-note {
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    padding: 18px 22px;
+    margin: 32px 0 48px 0;
+    font-size: 16px;
+    line-height: 1.6;
+    border-radius: 0 4px 4px 0;
+  }
+  .intro-note strong { color: var(--accent); }
+  section.brief-section {
+    margin: 0 0 64px 0;
+  }
+  section.brief-section h2 {
+    font-size: 24px;
+    line-height: 1.3;
+    margin: 0 0 24px 0;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+  section.brief-section h2 .section-num {
+    color: var(--accent);
+    font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  section.brief-section p {
+    margin: 0 0 20px 0;
+  }
+  section.brief-section p:last-of-type { margin-bottom: 28px; }
+  .synopsis {
+    background: var(--paper-shade);
+    border-radius: 6px;
+    padding: 22px 26px;
+    margin: 28px 0 28px 0;
+    font-size: 16px;
+    line-height: 1.55;
+  }
+  .synopsis .synopsis-label {
+    font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .synopsis ul {
+    margin: 0;
+    padding: 0 0 0 20px;
+  }
+  .synopsis li {
+    margin: 0 0 8px 0;
+  }
+  .synopsis li:last-child { margin-bottom: 0; }
+  .response-block {
+    margin: 28px 0 0 0;
+    background: var(--response-bg);
+    border: 1px solid var(--response-border);
+    border-radius: 6px;
+    padding: 20px 22px 22px 22px;
+  }
+  .response-block .response-label {
+    font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .response-block .response-hint {
+    font-size: 14px;
+    color: var(--ink-soft);
+    font-style: italic;
+    margin-bottom: 14px;
+    line-height: 1.5;
+  }
+  .response-block textarea {
+    width: 100%;
+    min-height: 110px;
+    border: 1px solid var(--response-border);
+    border-radius: 4px;
+    background: #fff;
+    padding: 12px 14px;
+    font-family: "Charter", "Georgia", serif;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--ink);
+    resize: vertical;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .response-block textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  .response-block .saved-indicator {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--ink-faint);
+    font-style: italic;
+    min-height: 16px;
+  }
+  .response-block .saved-indicator.is-saved {
+    color: #5a7d3a;
+  }
+  .who-label {
+    margin: 14px 0 6px 0;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+  .who-label label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+  }
+  .who-label input[type="checkbox"] {
+    accent-color: var(--accent);
+    margin: 0;
+  }
+  .send-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--paper);
+    border-top: 1px solid var(--rule);
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    box-shadow: 0 -2px 12px rgba(60, 50, 30, 0.06);
+    z-index: 100;
+  }
+  .send-bar .status {
+    font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+    font-size: 13px;
+    color: var(--ink-soft);
+    flex: 1;
+  }
+  .send-bar .status strong { color: var(--ink); font-weight: 600; }
+  .send-bar .actions { display: flex; gap: 10px; }
+  .btn {
+    font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 18px;
+    border-radius: 4px;
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.05s ease;
+    letter-spacing: 0.01em;
+  }
+  .btn:hover { background: #5a4225; }
+  .btn:active { transform: translateY(1px); }
+  .btn.btn-ghost {
+    background: transparent;
+    color: var(--accent);
+  }
+  .btn.btn-ghost:hover { background: var(--accent-soft); }
+  .signature {
+    text-align: center;
+    margin-top: 80px;
+    padding-top: 32px;
+    border-top: 1px solid var(--rule);
+    color: var(--ink-soft);
+    font-style: italic;
+    font-size: 16px;
+  }
+  .signature .name { color: var(--ink); font-style: normal; font-weight: 500; margin-top: 4px; }
+  @media (max-width: 540px) {
+    body { font-size: 17px; }
+    .container { padding: 36px 20px 0 20px; }
+    header.brief-header h1 { font-size: 28px; }
+    section.brief-section h2 { font-size: 21px; }
+    .send-bar { padding: 12px 18px; flex-wrap: wrap; }
+    .send-bar .status { width: 100%; order: 2; font-size: 12px; }
+    .send-bar .actions { width: 100%; order: 1; }
+    .btn { flex: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header class="brief-header">
+  <div class="kicker">Picard Strategic Brief · May 19, 2026</div>
+  <h1>Climate Outlook 2026-2028: El Niño and the Long Arc</h1>
+  <div class="meta">For Kelly and Tim Baker · Swan House Farm · Horizon: next 2-3 years</div>
+</header>
+
+<div class="intro-note">
+  <p style="margin:0 0 10px 0;"><strong>Kelly and Tim,</strong> this is Picard. Sam asked me to do a deep read on the developing El Niño and the longer-term climate trajectory for the farm, and I want your input on it before we let it shape the FY27 Working Capital narrative and the garage rebuild design.</p>
+  <p style="margin:0 0 10px 0;">Each section has a short prose argument, a bullet synopsis, and a response box. You can correct me where I'm wrong, fill in things I don't know, or flag what doesn't ring true from the ground. Mark which of you is responding by ticking the box (or both).</p>
+  <p style="margin:0;">When you're done, hit <strong>Send responses</strong> at the bottom. The page remembers what you've typed if you come back to it later.</p>
+</div>
+
+<section class="brief-section" data-section="enso-call">
+  <h2><span class="section-num">Section 1</span>The ENSO call</h2>
+  <p>As of mid-May 2026, El Niño is no longer a forecast. It is an emerging reality. The Niño 3.4 region is sitting at +0.9°C, already above the El Niño threshold, and the equatorial Pacific is warming fast. NOAA and IRI are both running probabilities at 96-98% for El Niño conditions persisting through December 2026 into February 2027. That level of model agreement is unusual and signals high confidence on the phase. Less certain is the strength: no peak-magnitude category is above 37% probability, but the ECMWF model is showing a path that could deliver one of the strongest events in 140 years. The "very strong" or "super" El Niño scenario is plausible enough that we should plan for it without assuming it.</p>
+  <p>What that means for our area at the most basic level is a warmer, drier winter than normal, with snowpack across the Washington Cascades historically running around 75% of normal in strong El Niño years. The kicker is the starting point. Washington is in its fourth consecutive year of statewide drought emergency. Snowpack across much of the state was around half of normal coming into spring 2026 and melted early. An El Niño winter on top of that base is not a 75%-snowpack year, it's a snowpack year that compounds an already-thin reservoir of water in the system. The 2027 growing season starts the clock with less margin than any of the last five.</p>
+  <p>The second thing El Niño does to the PNW, which often gets less attention than the snowpack story, is shift the storm track. Atmospheric river activity in the PNW does not increase uniformly in El Niño years (we sit in what the research literature calls the "AR increasing hole"), but the storms we do get are landing in a warmer atmosphere that holds more moisture. The December 2025 event that broke all-time records on the Skagit and Snohomish was the proof of concept. Fewer storms, more punch per storm. Plan for that pattern, not for a quiet winter.</p>
+
+  <div class="synopsis">
+    <div class="synopsis-label">Synopsis</div>
+    <ul>
+      <li>El Niño through winter 2026-27 is now 96-98% likely per NOAA and IRI.</li>
+      <li>ECMWF shows a plausible path to one of the strongest El Niños in 140 years; strength is not nailed down but worth planning for.</li>
+      <li>Cascades snowpack typically runs ~75% of normal in strong El Niño years.</li>
+      <li>The starting point matters: WA is in its fourth straight drought-emergency year with snowpack at ~50% coming into spring 2026. The base is already thin.</li>
+      <li>Fewer storms but each one carries more moisture (December 2025 atmospheric river broke Skagit records). Plan for punchy storms, not a quiet winter.</li>
+    </ul>
+  </div>
+
+  <div class="response-block">
+    <div class="response-label">Your response or questions</div>
+    <div class="response-hint">Anything on the ground that contradicts this read? Water levels you're already seeing, signals from neighbors or NRCS, things I'm missing?</div>
+    <textarea data-section-key="enso-call" placeholder="Type your response, questions, or corrections here..."></textarea>
+    <div class="who-label">
+      <span>From:</span>
+      <label><input type="checkbox" data-section-who="enso-call" data-who="Kelly"> Kelly</label>
+      <label><input type="checkbox" data-section-who="enso-call" data-who="Tim"> Tim</label>
+    </div>
+    <div class="saved-indicator" data-saved="enso-call"></div>
+  </div>
+</section>
+
+<section class="brief-section" data-section="long-arc">
+  <h2><span class="section-num">Section 2</span>The long-arc backdrop</h2>
+  <p>Strip ENSO out of the equation for a minute. The 2-3 year trajectory for Skagit Valley independent of any single El Niño cycle is two simultaneous trends pulling in opposite directions.</p>
+  <p>On the wet side, winter peak flows on the Skagit are climbing. The mean annual flood from 1975 to 2012 is 40% higher than from 1929 to 1974, and four of the five highest annual peak flows on record have occurred since 1975. The freezing level in the basin is rising, which means a larger share of the watershed is now collecting rain instead of snow. Rain runs off in hours; snow runs off in months. That structural shift converts winter precipitation into flood pulses and removes the spring-snowmelt buffer that historically kept summer streamflows healthy. Sea level rise is the compounding factor. The December 2025 event was made worse because king tides held the river up and the levees held more water for longer.</p>
+  <p>On the dry side, summer water is becoming the scarce resource it has not historically been for the Skagit. Climate Impacts Group projections show summer low flows dropping further below salmon-survival thresholds, which matters for the farm because in-stream flow rules are how WA Department of Ecology regulates irrigation withdrawal. Less buffer in the river means less reliability of any surface water source the farm draws on, and more pressure on groundwater and wells. Layered on top is the wildfire smoke profile, which is now a fixed feature of August and September. The American Lung Association's 2026 State of the Air report ranked Seattle-Tacoma 8th worst in the country for daily particle pollution, driven almost entirely by wildfire smoke. The Skagit Valley breathes the same air as Seattle, plus its own local plumes.</p>
+  <p>The two trends together create what climate researchers call "weather whiplash": heavier winter flood pulses followed by drier, smokier summers. Up to a 7-fold increase by 2100 in extreme rain events that follow high wildfire-danger periods within the same year. That's the climate Swan House Farm will operate in, and it's already here.</p>
+
+  <div class="synopsis">
+    <div class="synopsis-label">Synopsis</div>
+    <ul>
+      <li>Skagit winter peak flows are 40% higher than mid-20th-century baseline. Four of five record peaks have hit since 1975.</li>
+      <li>Freezing level in the basin is rising. More precipitation falls as rain, less as snow. Winter floods up; spring snowmelt buffer down.</li>
+      <li>Sea level rise compounds winter flooding (king tides held the December 2025 event up longer).</li>
+      <li>Summer streamflows projected to fall further below salmon-survival thresholds. Less buffer = more regulatory pressure on irrigation withdrawal.</li>
+      <li>August-September wildfire smoke is now structural, not episodic. Seattle-Tacoma is the 8th-worst US metro for daily particle pollution.</li>
+      <li>"Weather whiplash": wetter winter pulses + drier, smokier summers in the same year. Up to 7x more frequent by 2100. Already here, not a 2050 problem.</li>
+    </ul>
+  </div>
+
+  <div class="response-block">
+    <div class="response-label">Your response or questions</div>
+    <div class="response-hint">What have you actually seen on the property over the last 5 years? December 2025 high-water marks, drainage behavior, wells dropping, smoke days at the farm vs. Seattle?</div>
+    <textarea data-section-key="long-arc" placeholder="Type your response, questions, or corrections here..."></textarea>
+    <div class="who-label">
+      <span>From:</span>
+      <label><input type="checkbox" data-section-who="long-arc" data-who="Kelly"> Kelly</label>
+      <label><input type="checkbox" data-section-who="long-arc" data-who="Tim"> Tim</label>
+    </div>
+    <div class="saved-indicator" data-saved="long-arc"></div>
+  </div>
+</section>
+
+<section class="brief-section" data-section="water-infra">
+  <h2><span class="section-num">Section 3</span>Lens one: water and infrastructure</h2>
+  <p>The most expensive thing the farm can do over the next two to three years is build a $300K-$500K commercial kitchen, cold storage, and solar facility on the wrong assumption about water. The garage rebuild vision in the VAPG narrative is the right project. The climate read should change two things about how it gets executed.</p>
+  <p>First, drainage and flood-grade. The existing garage site is on the property along the North Fork. We do not have a current floodplain elevation analysis on file. Before construction begins (currently targeted Fall/Winter 2027-2028), we need a real elevation survey relative to FEMA base flood elevation and an honest read on December 2025 high-water marks against the planned slab elevation. The Skagit County floodplain maps are 40 years old and known to underestimate current risk. If the slab needs to come up a foot or two beyond what was originally drawn, that decision needs to be made in the planning phase, not discovered during permitting. This should be folded into the VAPG-funded architectural and engineering scope as a specific deliverable, not absorbed into general site work.</p>
+  <p>Second, water source resilience. The farm currently runs on monthly water costs of about $600. We have not done a stress test on what happens to that bill, or to actual water availability, in a year where summer streamflows are 60% of normal and Ecology calls a drought emergency in the WRIA. The rainwater collection that was floated as an optional add to the garage rebuild becomes more strategically valuable in this climate read, not less. Even a 20,000-gallon cistern off the new roof captures meaningful winter precipitation that can carry late-summer vegetable irrigation and reduce dependency on the well during the months when the well is most stressed. The cost is modest in the context of the full garage budget. We should move rainwater from "optional" to "default" in the next iteration of the rebuild specification.</p>
+  <p>The hydropower analysis in <code>Hydroponics and Solar/</code> should also get a climate-overlay pass. Micro-hydro feasibility depends on year-round stream flow. If the long-arc trend is lower summer flows on local tributaries, the hydro option degrades faster than the analysis currently reflects. Solar is the more climate-robust generation play. Less hedging is needed there because the federal ITC deadline is already forcing that decision.</p>
+  <p>The hardest call in this lens is the garage construction start date. A Fall 2027 start lines up with the VAPG-then-Working-Capital timeline, but Fall is also when atmospheric rivers begin landing. The window we want is a dry late summer with permits in hand and slab poured before the November storm season opens. If the FY27 Working Capital award lands on the late end of its possible window (Aug-Oct 2027 award notification translating to construction money flowing maybe Nov-Dec 2027), the project may have to either start in winter (bad idea on a flood-adjacent site) or wait until Spring 2028. Build that scheduling honesty into expectations now, before we're holding award money and feeling pressure to break ground.</p>
+
+  <div class="synopsis">
+    <div class="synopsis-label">Synopsis</div>
+    <ul>
+      <li>Garage site needs a real floodplain elevation analysis before construction. Skagit County floodplain maps are 40 years old.</li>
+      <li>Pull December 2025 high-water marks against the planned slab elevation. Fold this into the VAPG-funded A&E scope.</li>
+      <li>Move rainwater collection (20K-gallon cistern off new roof) from "optional" to "default" in the rebuild spec. Strongest single recommendation in this brief.</li>
+      <li>Re-run micro-hydro analysis with declining summer flow projections. Solar holds up better under climate change.</li>
+      <li>Construction window: if FY27 Working Capital award lands late, Spring 2028 may be more realistic than Fall 2027. Don't break ground in November on a flood-adjacent site.</li>
+    </ul>
+  </div>
+
+  <div class="response-block">
+    <div class="response-label">Your response or questions</div>
+    <div class="response-hint">Specific questions for you: where exactly did the December 2025 high water come up to on the garage site? Do you have a sense of well behavior over the last three summers? Any existing rainwater collection on the property, or thoughts on the cistern siting?</div>
+    <textarea data-section-key="water-infra" placeholder="Type your response, questions, or corrections here..."></textarea>
+    <div class="who-label">
+      <span>From:</span>
+      <label><input type="checkbox" data-section-who="water-infra" data-who="Kelly"> Kelly</label>
+      <label><input type="checkbox" data-section-who="water-infra" data-who="Tim"> Tim</label>
+    </div>
+    <div class="saved-indicator" data-saved="water-infra"></div>
+  </div>
+</section>
+
+<section class="brief-section" data-section="growing-season">
+  <h2><span class="section-num">Section 4</span>Lens two: growing season and crops</h2>
+  <p>Skagit Valley's growing season is its quiet competitive advantage. Lower valley sits at roughly 230 frost-free days with a last spring frost around April 15 and first fall frost around October 15. The cool marine climate puts the region in the same accumulated-heat range as the wine regions of France and Germany. Long season, moderate GDD accumulation, ideal for the brassicas, alliums, root crops, and cold-tolerant fruits that the farm already produces and that San Fermo's menu leans on.</p>
+  <p>What the climate trajectory is doing to this advantage is asymmetric. Frost dates are not moving as fast as growing-degree-day accumulation. Spring is warming, but late-season frost events have become more variable, not less. The trap is planting tender crops on what feels like an early spring and getting hit by a mid-April cold snap that no longer fits the historical pattern. We should be conservative on planting dates for anything heat-sensitive in 2027. Assume the same April 15 cutoff that the historical record says, not the warmer signal a strong El Niño spring might suggest.</p>
+  <p>On the other end, the longer warm shoulder in fall is real and is an opportunity that's underexploited. Crops that historically ripened in late August now have a credible path to early October, which extends the farmstand season and the farm dinner ingredient palette. The farm is already practicing this implicitly (the farm dinner season currently runs through mid-September). The strategic question is whether to push the farmstand and dinners through the first weekend of October instead of stopping in September, given that the climate is increasingly cooperating with that window. The risk on the other side is that October is also wildfire-smoke peak. An Indian-summer dinner that gets hazed out is a worse outcome than not booking it.</p>
+  <p>The harder structural question is summer water for the 30% of production that is annual vegetables, herbs, and orchard. If 2027 brings the predicted El Niño hangover (warm-dry summer following a low-snowpack winter), irrigation demand will be higher and surface water reliability lower. The farm should run a quick exercise this fall on what the irrigation plan looks like if July and August require 25% more water than 2024 baselines, and where that water comes from. NRCS-EQIP has historically funded irrigation efficiency upgrades; the active EQIP relationship with Emmett Wild at Skagit Conservation District is the right channel to revisit this through. A drip-irrigation efficiency project layered onto the existing EQIP file is grant-fundable and reduces exposure to exactly the summer-water risk this brief is flagging.</p>
+  <p>For the livestock side (70% of production), the climate read is more forgiving in the short term. Pasture-based rotational grazing on regenerative ground is the most climate-resilient form of livestock production, and the farm is already running that model. The 2-3 year risk is forage quality in dry summers and water access at pasture during the worst smoke and heat weeks. Both are manageable with the existing infrastructure but worth tracking as the cumulative drought years compound.</p>
+
+  <div class="synopsis">
+    <div class="synopsis-label">Synopsis</div>
+    <ul>
+      <li>Don't get fooled by a warm early spring in 2027. Late-frost variability is up, not down. Hold the April 15 cutoff for heat-sensitive plantings.</li>
+      <li>Longer warm fall shoulder is real and underexploited. Worth pushing farmstand and dinner programming into early October.</li>
+      <li>But October is also wildfire-smoke peak. A smoked-out fall dinner is worse than not booking it.</li>
+      <li>Run an irrigation stress test this fall: if July-Aug 2027 needs 25% more water than 2024, where does it come from?</li>
+      <li>Drip-irrigation efficiency project through Emmett Wild / SCD on the existing EQIP file. Grant-fundable, addresses summer water risk directly.</li>
+      <li>Livestock model (pasture rotational grazing) is climate-resilient short term. Watch forage quality and pasture water in heat/smoke weeks.</li>
+    </ul>
+  </div>
+
+  <div class="response-block">
+    <div class="response-label">Your response or questions</div>
+    <div class="response-hint">What's your read on planting timing for 2027? Where is the orchard and annual vegetable irrigation actually pulling from today, and what's the well like late July through September? Any forage signals from the last two summers?</div>
+    <textarea data-section-key="growing-season" placeholder="Type your response, questions, or corrections here..."></textarea>
+    <div class="who-label">
+      <span>From:</span>
+      <label><input type="checkbox" data-section-who="growing-season" data-who="Kelly"> Kelly</label>
+      <label><input type="checkbox" data-section-who="growing-season" data-who="Tim"> Tim</label>
+    </div>
+    <div class="saved-indicator" data-saved="growing-season"></div>
+  </div>
+</section>
+
+<section class="brief-section" data-section="dinner-season">
+  <h2><span class="section-num">Section 5</span>Lens three: farm dinner season</h2>
+  <p>The dinner season is the single most weather-exposed revenue line at Swan House. Twenty events between May 16 and mid-September, mostly outdoor or pergola-covered, at $175 a seat with 22 average covers. That's roughly $77K in dinner-season top-line, before barbecues and the in-kind labor that San Fermo brings. Any weather event that pushes a dinner to refunds or rescheduling has a fast and visible P&L impact.</p>
+  <p>The El Niño-specific risk windows for the 2026 and 2027 dinner seasons are not symmetric. May and June dinners are at low risk under the developing El Niño. The warmer signal helps if anything, and atmospheric river season has typically wound down. July and August are mostly heat and smoke risk, both of which are elevated in El Niño years that follow low-snowpack winters. The 2026 season's late-August and September dinners are the highest-attention dates on the calendar. By 2027, the season is operating against an even thinner snowpack base and a still-active El Niño, and smoke risk is structurally elevated.</p>
+  <p>The operational implication is that the contingency plan for smoke needs to be more developed than it currently is. A heat event you can manage with tent shade and timing shifts. A 200+ AQI smoke day is not a "guests will tough it out" situation, particularly for the demographic that pays $175 for a farm dinner. The contingency options worth pre-building before the 2026 season hits its smoke window are an indoor backup arrangement (the existing house, the planned commercial kitchen post-rebuild, or an agreement with a neighbor's barn or covered space), an explicit cancellation and refund policy that lets the farm pull the trigger 24-48 hours out without losing reputation, and a smoke-day communication template that handles the guest message professionally.</p>
+  <p>The pricing question that comes out of this lens is whether the dinner price needs to absorb the rising weather-cancellation premium. At $175 a seat with a thin margin (~$824 profit per event for SHF after the San Fermo split), one cancelled dinner that triggers refunds wipes out the profit of one or two other dinners. The structural answer is either higher prices to build a cancellation reserve, or a deposit-and-credit model that converts a smoke cancellation into a rescheduled date later in the season or the next year, preserving the revenue. The Working Capital narrative could fold a smoke-resilience capital line into the rebuild scope. Covered outdoor space that meets fire-marshal smoke-AQI standards is a real category of build, and one the VAPG planning study should scope.</p>
+  <p>For 2026 specifically: the season is already booked. The action item is contingency planning, not pricing changes. For 2027: revisit pricing and the deposit policy after the 2026 season closes and we have one more data point on weather-driven losses.</p>
+
+  <div class="synopsis">
+    <div class="synopsis-label">Synopsis</div>
+    <ul>
+      <li>Dinner season is the most weather-exposed revenue line on the farm. ~$77K and rising risk profile.</li>
+      <li>2026 risk window: late August through September. 2027: same window plus a stronger structural smoke signal.</li>
+      <li>Build a smoke contingency plan before July 1, 2026: indoor backup location, formal cancellation+refund policy, guest comms template.</li>
+      <li>Recommended AQI thresholds: 150 = reduced outdoor capacity, 200+ = full cancellation.</li>
+      <li>Open pricing question for 2027: raise prices to build a cancellation reserve, or shift to deposit-and-credit that converts cancellations into reschedules?</li>
+      <li>The garage rebuild scope should explicitly include smoke-resilient covered event space (fire-marshal AQI standards).</li>
+    </ul>
+  </div>
+
+  <div class="response-block">
+    <div class="response-label">Your response or questions</div>
+    <div class="response-hint">Where would the smoke-backup indoor location actually be — the existing house, a neighbor, the future kitchen building? Are you comfortable with the AQI thresholds? And the 2027 pricing call: gut read on raise vs. deposit-and-credit?</div>
+    <textarea data-section-key="dinner-season" placeholder="Type your response, questions, or corrections here..."></textarea>
+    <div class="who-label">
+      <span>From:</span>
+      <label><input type="checkbox" data-section-who="dinner-season" data-who="Kelly"> Kelly</label>
+      <label><input type="checkbox" data-section-who="dinner-season" data-who="Tim"> Tim</label>
+    </div>
+    <div class="saved-indicator" data-saved="dinner-season"></div>
+  </div>
+</section>
+
+<section class="brief-section" data-section="long-arc-resilience">
+  <h2><span class="section-num">Section 6</span>Lens four: long-arc resilience</h2>
+  <p>Stepping back from the specific El Niño cycle, the question the farm should be answering over the next two to three years is what Swan House needs to become to be durable in the climate it's going to operate in for the next twenty. Three structural shifts are worth being honest about now.</p>
+  <p>The first is that the farm's revenue concentration in outdoor events is becoming a higher-volatility business model than it was when the dinner program started. Twenty dinners a season at increasing weather risk is a different proposition than twenty dinners a season at stable weather risk. Retreating from dinners is the wrong move. They are the highest-margin and highest-brand revenue line at the farm. The strategic answer is to grow the rest of the revenue mix toward streams that are less weather-coupled. The farmstand is partly weather-coupled (smoke days kill foot traffic). Direct-to-restaurant sales, value-added products, and a commercial kitchen that can host indoor private events year-round are all less weather-coupled. The garage rebuild is, in this framing, the single most important climate-resilience investment the farm is making, even though it has not been pitched that way in the VAPG narrative. There is a version of the FY27 Working Capital narrative that leans into climate resilience as the lens, particularly given USDA's increasing prioritization of climate-smart agriculture under the current Farm Bill cycle.</p>
+  <p>The second is that the farm's regulatory and insurance exposure is rising as the events business grows in a higher-risk climate. Liability for an event cancelled due to smoke is different from liability for an event cancelled due to rain. Crop insurance is a more relevant tool than the farm has historically engaged with, particularly as the orchard and vegetable acreage scales. WSDA, FSA, and private ag-insurance products have all expanded their climate-coverage offerings in the last two years. This should be on the post-VAPG-award action list, not something we look at the first time we need it.</p>
+  <p>The third is that the labor pipeline strategy interacts with climate in ways the labor doc currently doesn't address. WWOOFers come for a working-farm experience, not a smoke-and-flood experience. The seasons that are easiest to recruit into are also the seasons most exposed to extreme heat, smoke, and atmospheric river events. The internship program being scoped for fall 2026 design should explicitly account for what a worker's experience looks like during a bad week. Housing has to be smoke-tight, the work plan has to flex, and the farm needs to be the kind of place where someone who came for a season doesn't leave early because of a climate event. This is a soft factor that compounds. Farms that handle this well will keep workers; farms that don't will lose them.</p>
+  <p>The VAPG narrative for FY27 has a real lane open here. Cannibalization, brand play, and labor arbitrage are the three framings currently on the table for the Working Capital application. Climate resilience is a fourth that deserves a serious look. It pulls in the rainwater collection, the indoor kitchen, the cold storage, the smoke-resilient event space, the workforce housing standards, and the irrigation-efficiency story into one coherent narrative. USDA scoring under the current Farm Bill is increasingly receptive to climate-smart framing, and Swan House has the underlying conservation practices and the regenerative-livestock story to back it up. Worth a stress test before NOFO drops.</p>
+
+  <div class="synopsis">
+    <div class="synopsis-label">Synopsis</div>
+    <ul>
+      <li>Outdoor event concentration is higher-volatility now than when the dinner program started. Don't retreat from dinners; grow the less weather-coupled revenue around them.</li>
+      <li>Garage rebuild is the most important climate-resilience investment the farm is making. Hasn't been pitched that way in VAPG narrative, but it is.</li>
+      <li>Insurance and crop coverage need a real look before we need it. WSDA, FSA, private ag-insurance have all expanded climate coverage in last two years.</li>
+      <li>Labor pipeline needs climate-event scenarios built in. Smoke-tight housing, flexible work plans, workers who don't leave mid-season.</li>
+      <li>Climate resilience deserves stress-testing as a fourth FY27 Working Capital narrative framing alongside cannibalization, brand play, labor arbitrage.</li>
+    </ul>
+  </div>
+
+  <div class="response-block">
+    <div class="response-label">Your response or questions</div>
+    <div class="response-hint">Big strategic question: does the climate-resilience framing for FY27 Working Capital feel right to you, or does one of the other framings feel more honest? Also: anything you know about insurance options for the dinner business or crop side that I should fold in?</div>
+    <textarea data-section-key="long-arc-resilience" placeholder="Type your response, questions, or corrections here..."></textarea>
+    <div class="who-label">
+      <span>From:</span>
+      <label><input type="checkbox" data-section-who="long-arc-resilience" data-who="Kelly"> Kelly</label>
+      <label><input type="checkbox" data-section-who="long-arc-resilience" data-who="Tim"> Tim</label>
+    </div>
+    <div class="saved-indicator" data-saved="long-arc-resilience"></div>
+  </div>
+</section>
+
+<section class="brief-section" data-section="action-list">
+  <h2><span class="section-num">Section 7</span>Action punch list</h2>
+  <p>These are the concrete items that flow from the analysis above, sequenced over the next two to three years and prioritized by what has to happen first.</p>
+  <p><strong>Before the 2026 dinner season smoke window (target: by July 1, 2026):</strong> Build the smoke contingency plan for the 2026 dinner season (indoor or covered backup location, formal cancellation and refund policy with deposit-and-credit option, guest communication template). Set AQI thresholds for cancellation (150 reduced capacity, 200+ full cancellation) and document for the kitchen and FOH teams so the call doesn't get made under pressure.</p>
+  <p><strong>Before the 2026 farmstand and orchard season closes (target: by September 30, 2026):</strong> Run the irrigation stress test. If July-August 2027 requires 25% more water than 2024 baselines, where does it come from. Reopen the EQIP file with Emmett Wild at SCD and scope a drip-irrigation efficiency project. Picard to surface the rainwater collection question in the next sweep email and move it from "optional" to "default" in the garage rebuild spec.</p>
+  <p><strong>Before the FY27 Working Capital NOFO drops (target: Feb 2027):</strong> Stress-test the climate-resilience narrative as the Working Capital framing. Commission a real floodplain elevation analysis for the garage rebuild site once the VAPG planning award lands. Re-run the micro-hydro analysis with summer low-flow climate projections layered in.</p>
+  <p><strong>Before the 2027 dinner season opens (target: April 30, 2027):</strong> Decide on dinner pricing and deposit policy for 2027 with one more year of weather-driven cancellation data. Confirm the construction window for the garage rebuild and push back on Fall 2027 expectations if the Working Capital award is going to land too late.</p>
+  <p><strong>During the 2027 growing season (May-September 2027):</strong> Track soil moisture, water bill, and irrigation use against 2024 baselines. This is the data that turns the climate-resilience narrative into a fundable case for the FY28 cycle if FY27 doesn't land.</p>
+  <p><strong>Ongoing through 2028:</strong> Insurance and liability review for expanded event operations under higher weather risk. Review with an ag insurance broker by Q4 2026.</p>
+
+  <div class="synopsis">
+    <div class="synopsis-label">Synopsis · Top 5 by urgency</div>
+    <ul>
+      <li><strong>By July 1, 2026:</strong> Smoke contingency plan for the 2026 dinner season (indoor backup, AQI thresholds, deposit-and-credit policy, guest comms template).</li>
+      <li><strong>Next sweep email:</strong> Move rainwater collection from "optional" to "default" in the garage rebuild spec.</li>
+      <li><strong>By Sept 30, 2026:</strong> Irrigation stress test + EQIP drip-efficiency project scope with Emmett Wild.</li>
+      <li><strong>By Feb 2027:</strong> Climate-resilience narrative stress-tested as FY27 Working Capital framing.</li>
+      <li><strong>By Q4 2026:</strong> Insurance and liability review with an ag broker.</li>
+    </ul>
+  </div>
+
+  <div class="response-block">
+    <div class="response-label">Your response or questions</div>
+    <div class="response-hint">Which of these can you own, which need Sam or me to lead, and is anything missing that you'd add? Anything in the sequence that should swap order?</div>
+    <textarea data-section-key="action-list" placeholder="Type your response, questions, or corrections here..."></textarea>
+    <div class="who-label">
+      <span>From:</span>
+      <label><input type="checkbox" data-section-who="action-list" data-who="Kelly"> Kelly</label>
+      <label><input type="checkbox" data-section-who="action-list" data-who="Tim"> Tim</label>
+    </div>
+    <div class="saved-indicator" data-saved="action-list"></div>
+  </div>
+</section>
+
+<section class="brief-section" data-section="evidence">
+  <h2><span class="section-num">Section 8</span>Evidence and uncertainty</h2>
+  <p>The claims in this brief separate into what is firmly grounded and what is extrapolated. Worth being honest about which is which.</p>
+  <p><strong>Verified</strong> through current NOAA CPC, IRI, and peer-reviewed literature: the May 2026 ENSO state and the 96-98% El Niño probability through winter 2026-27. The historical Skagit basin flood-frequency trend (40% higher mean annual flood post-1975). The Cascades snowpack pattern under strong El Niño (~75% of normal). The structural shift from snow to rain in the basin's winter precipitation. The atmospheric-river "increasing hole" finding for the PNW. Seattle-Tacoma's 8th-worst ranking in the 2026 State of the Air report.</p>
+  <p><strong>Inferred</strong>, with reasoning but not direct sourcing: the specific claim that 2027 summer water in the Skagit will be tighter than 2024 baselines. This is grounded in the snowpack-summer-flow relationship and the 4-year drought streak, but the magnitude is not a forecast, it's an extrapolation from precedent. Same for the wildfire smoke profile of August-September 2027. The structural risk is high, the actual event is not predictable. The dinner-pricing recommendation is based on margin analysis from the project overview and is sensitive to actual cancellation rates we have not measured yet.</p>
+  <p>Three falsifier lines worth holding the analysis against: if the developing El Niño collapses into neutral by July (NOAA's 2-4% tail scenario), the winter snowpack and summer water portions of this brief lose force, though the long-arc trends do not. If the FY27 Working Capital NOFO drops materially earlier than February 2027, the climate-resilience narrative work needs to accelerate. If the December 2025 atmospheric river event turns out to be a high-water mark for the next decade rather than a new normal, the garage flood-elevation work is overcautious.</p>
+  <p>The strongest single recommendation in this brief, robust to all of those falsifiers, is the rainwater collection move from optional to default in the garage rebuild. Captures winter water, reduces summer water exposure, makes sense under almost any plausible climate trajectory, and is a small line item in a large capital project.</p>
+
+  <div class="synopsis">
+    <div class="synopsis-label">Synopsis</div>
+    <ul>
+      <li><strong>Verified:</strong> El Niño probabilities, Skagit flood-frequency trend, Cascades snowpack patterns under strong El Niño, snow-to-rain shift, smoke profile.</li>
+      <li><strong>Inferred:</strong> Specific magnitude of 2027 summer water tightness, specific 2027 smoke event timing, dinner-pricing math.</li>
+      <li><strong>Falsifiers:</strong> El Niño collapses to neutral by July (low odds); FY27 NOFO drops earlier than expected; December 2025 was a one-off rather than a new normal.</li>
+      <li><strong>Most robust recommendation:</strong> Rainwater collection moves from optional to default in the garage rebuild. Holds up under every plausible climate trajectory.</li>
+    </ul>
+  </div>
+
+  <div class="response-block">
+    <div class="response-label">Your response or questions</div>
+    <div class="response-hint">Anything I labeled "verified" that you'd push back on, or "inferred" claims you have better data on? Anything important missing from the falsifier list?</div>
+    <textarea data-section-key="evidence" placeholder="Type your response, questions, or corrections here..."></textarea>
+    <div class="who-label">
+      <span>From:</span>
+      <label><input type="checkbox" data-section-who="evidence" data-who="Kelly"> Kelly</label>
+      <label><input type="checkbox" data-section-who="evidence" data-who="Tim"> Tim</label>
+    </div>
+    <div class="saved-indicator" data-saved="evidence"></div>
+  </div>
+</section>
+
+<div class="signature">
+  More soon,
+  <div class="name">Picard <span style="color:var(--ink-faint);font-weight:400;">(Sam's farm business advisor)</span></div>
+</div>
+
+</div>
+
+<div class="send-bar">
+  <div class="status" id="status">No responses yet. Start anywhere; the page will remember as you type.</div>
+  <div class="actions">
+    <button class="btn btn-ghost" id="clearBtn" type="button" title="Clear all saved responses on this device">Clear</button>
+    <button class="btn" id="sendBtn" type="button">Send responses</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  const STORAGE_PREFIX = 'swan-house-climate-brief-2026:';
+  const RECIPIENT = 'sam@sanfermoseattle.com';
+  const SUBJECT = 'Climate Outlook 2026-2028 — responses from Swan House Farm';
+
+  const sections = [];
+  document.querySelectorAll('section.brief-section').forEach(sec => {
+    const key = sec.dataset.section;
+    const titleEl = sec.querySelector('h2');
+    const titleText = titleEl ? (titleEl.textContent || '').replace(/Section \d+/, '').trim() : key;
+    const ta = sec.querySelector('textarea[data-section-key="' + key + '"]');
+    const whoBoxes = sec.querySelectorAll('input[data-section-who="' + key + '"]');
+    const saved = sec.querySelector('[data-saved="' + key + '"]');
+    sections.push({ key, title: titleText, textarea: ta, whoBoxes, savedEl: saved });
+  });
+
+  function loadAll() {
+    sections.forEach(s => {
+      const tVal = localStorage.getItem(STORAGE_PREFIX + s.key + ':text');
+      if (tVal !== null) s.textarea.value = tVal;
+      const whoVal = localStorage.getItem(STORAGE_PREFIX + s.key + ':who');
+      if (whoVal !== null) {
+        const arr = whoVal.split(',').filter(Boolean);
+        s.whoBoxes.forEach(cb => { cb.checked = arr.indexOf(cb.dataset.who) !== -1; });
+      }
+      updateSavedIndicator(s);
+    });
+    updateStatus();
+  }
+
+  function updateSavedIndicator(s) {
+    const hasText = s.textarea.value.trim().length > 0;
+    if (hasText) {
+      s.savedEl.textContent = 'Saved locally on this device.';
+      s.savedEl.classList.add('is-saved');
+    } else {
+      s.savedEl.textContent = '';
+      s.savedEl.classList.remove('is-saved');
+    }
+  }
+
+  function filledCount() {
+    return sections.filter(s => s.textarea.value.trim().length > 0).length;
+  }
+
+  function updateStatus() {
+    const n = filledCount();
+    const total = sections.length;
+    const status = document.getElementById('status');
+    if (n === 0) {
+      status.innerHTML = 'No responses yet. Start anywhere; the page will remember as you type.';
+    } else {
+      status.innerHTML = '<strong>' + n + ' of ' + total + ' sections</strong> have a response so far. Page auto-saves to this device.';
+    }
+  }
+
+  sections.forEach(s => {
+    s.textarea.addEventListener('input', () => {
+      localStorage.setItem(STORAGE_PREFIX + s.key + ':text', s.textarea.value);
+      updateSavedIndicator(s);
+      updateStatus();
+    });
+    s.whoBoxes.forEach(cb => {
+      cb.addEventListener('change', () => {
+        const checked = Array.from(s.whoBoxes).filter(c => c.checked).map(c => c.dataset.who);
+        localStorage.setItem(STORAGE_PREFIX + s.key + ':who', checked.join(','));
+      });
+    });
+  });
+
+  document.getElementById('sendBtn').addEventListener('click', () => {
+    const lines = [];
+    lines.push('Responses to Climate Outlook 2026-2028 brief');
+    lines.push('Sent from: https://samfermo.github.io/SwanHouse/picard-briefs/climate-2026/');
+    lines.push('');
+    let any = false;
+    sections.forEach(s => {
+      const txt = s.textarea.value.trim();
+      if (txt.length === 0) return;
+      any = true;
+      const who = Array.from(s.whoBoxes).filter(c => c.checked).map(c => c.dataset.who).join(' + ') || 'unspecified';
+      lines.push('=== ' + s.title + ' ===');
+      lines.push('From: ' + who);
+      lines.push('');
+      lines.push(txt);
+      lines.push('');
+      lines.push('');
+    });
+    if (!any) {
+      const proceed = confirm('No section responses have been filled in. Send an empty email anyway?');
+      if (!proceed) return;
+      lines.push('(No section responses were filled in before sending.)');
+    }
+    const body = lines.join('\n');
+    const url = 'mailto:' + encodeURIComponent(RECIPIENT)
+      + '?subject=' + encodeURIComponent(SUBJECT)
+      + '&body=' + encodeURIComponent(body);
+    window.location.href = url;
+  });
+
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    if (!confirm('Clear all saved responses on this device? This cannot be undone.')) return;
+    sections.forEach(s => {
+      localStorage.removeItem(STORAGE_PREFIX + s.key + ':text');
+      localStorage.removeItem(STORAGE_PREFIX + s.key + ':who');
+      s.textarea.value = '';
+      s.whoBoxes.forEach(cb => { cb.checked = false; });
+      updateSavedIndicator(s);
+    });
+    updateStatus();
+  });
+
+  loadAll();
+})();
+</script>
+</body>
+</html>
