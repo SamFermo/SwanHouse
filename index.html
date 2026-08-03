@@ -52,6 +52,17 @@
       backdrop-filter: blur(10px);
       box-shadow: 0 1px 0 rgba(0,0,0,0.06);
     }
+    /* Inline links inside body copy. Without this a bare <a> in a paragraph
+       renders browser-default blue, which reads as a mistake against the cream
+       palette. Forest green matches the nav CTA and the buttons. */
+    .prose-link {
+      color: var(--forest);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      text-decoration-thickness: 1px;
+      transition: color 0.3s ease;
+    }
+    .prose-link:hover { color: var(--forest-dark); }
     .nav-logo {
       display: flex; align-items: center; gap: 0.75rem;
       text-decoration: none; color: var(--charcoal);
@@ -556,7 +567,7 @@
           <p>San Fermo hosts farm dinners on select weekends from May through September. The afternoon starts with an arrival reception and hors d'oeuvres, followed by walking tours of the farm. Then we sit down for a five-course paired wine dinner in the garden. The evening finishes with dessert and coffee.</p>
           <p>Menus are driven by what's available from the farm each season. Our chef receives a fresh sheet a few weeks before each event and builds the menu from there. All 26 guests are served the same meal, featuring our lamb, beef, pork, and produce from the garden and orchards.</p>
           <p>Events start between 3:30 and 4:30 depending on the time of year and generally end between 7 and 8 PM.</p>
-          <p>If you have dietary restrictions, please reach out before purchasing tickets. Unlike restaurant dining, options for course substitutions are limited.</p>
+          <p>If you have dietary restrictions, please <a href="mailto:info@sanfermoseattle.com?subject=SHF%20Farm%20Dinner%20Dietary%20Questions" class="prose-link">reach out</a> before purchasing tickets. Unlike restaurant dining, options for course substitutions are limited.</p>
           <a href="https://gateway.gravitylink.net/interface/epayform/DkISwXpFde1LvPreJfJ1kBbwXDswqNVr/" target="_blank" class="btn btn-primary" style="margin-top: 0.5rem;">Buy Tickets</a>
         </div>
         <div class="dinners-schedule fade-in">
@@ -584,7 +595,7 @@
           <div class="schedule-note">
             <p><strong>Tickets:</strong> $450 per ticket, admits two guests. Includes reception, 5-course paired wine dinner, tax, and service.</p>
             <p><strong>Giving back:</strong> $50 from each ticket in 2026 goes to farmers impacted by the 2025 flood.</p>
-            <p style="margin-top: 0.75rem; font-style: italic; font-size: 0.8rem;">Events often sell out before menus are published. Email to join the waitlist for sold-out dates.</p>
+            <p style="margin-top: 0.75rem; font-style: italic; font-size: 0.8rem;">Events often sell out before menus are published. <a href="mailto:info@sanfermoseattle.com?subject=SHF%20Farm%20Dinner%20Waitlist" class="prose-link">Email to join the waitlist</a> for sold-out dates.</p>
           </div>
         </div>
       </div>
