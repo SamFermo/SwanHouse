@@ -1020,10 +1020,18 @@
       if (bannerEl) bannerEl.innerHTML = `<div class="season-banner">${banner}</div>`;
 
       // CTA: waitlist leads, tickets stay reachable but demoted
+      // Buy Tickets only exists while something is actually open. The payment form
+      // validates nothing — it accepts any date, including sold-out ones and dates
+      // with no dinner — and bookings are final once payment clears. With zero open
+      // dates the button has no legitimate use and can only take money for a seat
+      // that does not exist. It reappears on its own the moment a date is marked
+      // open in the portal. Sam's call 2026-08-03, the day the 2026 season sold out.
       const ctaEl = document.getElementById('dinnerCta');
       if (ctaEl) ctaEl.innerHTML =
         `<a href="${WAITLIST_URL}" class="btn btn-primary">Join the Waitlist</a>` +
-        `<a href="${TICKET_URL}" target="_blank" class="btn btn-demoted">Buy Tickets</a>`;
+        (open.length
+          ? `<a href="${TICKET_URL}" target="_blank" class="btn btn-demoted">Buy Tickets</a>`
+          : '');
 
       const cautionEl = document.getElementById('ctaCaution');
       if (cautionEl) cautionEl.textContent = open.length
