@@ -242,6 +242,43 @@
     .schedule-note strong {
       font-weight: 500; color: var(--charcoal);
     }
+    /* Sold-out marking. The old Wix page did this by hand-colouring dates red,
+       which relies on the guest reading a legend. Strikethrough plus a muted tone
+       reads as unavailable on its own, and the legend stays as backup. Colour is
+       never the only signal, so this still works for colourblind guests. */
+    .date-sold {
+      text-decoration: line-through;
+      text-decoration-thickness: 1px;
+      opacity: 0.45;
+    }
+    .date-open {
+      color: var(--forest); font-weight: 500;
+    }
+    .date-note {
+      display: inline-block; margin-left: 0.3rem;
+      font-size: 0.72rem; font-style: italic; color: var(--forest);
+    }
+    .schedule-legend {
+      font-family: var(--font-sans); font-size: 0.75rem; font-weight: 300;
+      color: var(--warm-gray-light); margin-top: 0.9rem;
+    }
+    .season-banner {
+      background: var(--moss); border-radius: 6px;
+      padding: 0.85rem 1rem; margin-bottom: 1.1rem;
+      font-family: var(--font-sans); font-size: 0.85rem; line-height: 1.55;
+      color: var(--forest-dark);
+    }
+    .season-banner strong { font-weight: 600; }
+    .dinner-cta { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-top: 0.5rem; }
+    .btn-demoted {
+      background: transparent; border: 1px solid rgba(0,0,0,0.2);
+      color: var(--warm-gray); font-size: 0.78rem; padding: 0.6rem 1.1rem;
+    }
+    .btn-demoted:hover { border-color: var(--charcoal); color: var(--charcoal); }
+    .cta-caution {
+      font-family: var(--font-sans); font-size: 0.75rem; font-style: italic;
+      color: var(--warm-gray-light); margin-top: 0.5rem; max-width: 34rem;
+    }
 
     /* ── DINNER GALLERY ── */
     .dinner-gallery {
@@ -568,30 +605,14 @@
           <p>Menus are driven by what's available from the farm each season. Our chef receives a fresh sheet a few weeks before each event and builds the menu from there. All 26 guests are served the same meal, featuring our lamb, beef, pork, and produce from the garden and orchards.</p>
           <p>Events start between 3:30 and 4:30 depending on the time of year and generally end between 7 and 8 PM.</p>
           <p>If you have dietary restrictions, please <a href="mailto:info@sanfermoseattle.com?subject=SHF%20Farm%20Dinner%20Dietary%20Questions" class="prose-link">reach out</a> before purchasing tickets. Unlike restaurant dining, options for course substitutions are limited.</p>
-          <a href="https://gateway.gravitylink.net/interface/epayform/DkISwXpFde1LvPreJfJ1kBbwXDswqNVr/" target="_blank" class="btn btn-primary" style="margin-top: 0.5rem;">Buy Tickets</a>
+          <div class="dinner-cta" id="dinnerCta"></div>
+          <p class="cta-caution" id="ctaCaution"></p>
         </div>
         <div class="dinners-schedule fade-in">
           <h3>2026 Schedule</h3>
-          <div class="schedule-month">
-            <span class="schedule-month-name">May</span>
-            <span class="schedule-month-dates">16, 17, 23, 24</span>
-          </div>
-          <div class="schedule-month">
-            <span class="schedule-month-name">June</span>
-            <span class="schedule-month-dates">6, 7, 13, 14</span>
-          </div>
-          <div class="schedule-month">
-            <span class="schedule-month-name">July</span>
-            <span class="schedule-month-dates">11, 12, 18, 19</span>
-          </div>
-          <div class="schedule-month">
-            <span class="schedule-month-name">August</span>
-            <span class="schedule-month-dates">8, 9, 15, 16</span>
-          </div>
-          <div class="schedule-month">
-            <span class="schedule-month-name">September</span>
-            <span class="schedule-month-dates">5, 6, 12, 13</span>
-          </div>
+          <div id="seasonBanner"></div>
+          <div id="scheduleMonths"></div>
+          <p class="schedule-legend" id="scheduleLegend"></p>
           <div class="schedule-note">
             <p><strong>Tickets:</strong> $450 per ticket, admits two guests. Includes reception, 5-course paired wine dinner, tax, and service.</p>
             <p><strong>Giving back:</strong> $50 from each ticket in 2026 goes to farmers impacted by the 2025 flood.</p>
@@ -903,6 +924,89 @@
       });
     }, { threshold: 0.15 });
     document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+    /* ══ FARM DINNER SCHEDULE ══════════════════════════════════════════════════
+       EDIT THIS LIST AND NOTHING ELSE when availability changes.
+
+       status: 'sold'  -> struck through, not bookable
+               'open'  -> highlighted in green
+       note:   optional short text shown beside an open date, e.g. '2 seats left'
+
+       The old Wix page did this by hand-colouring dates red and trusting guests to
+       read a legend. It also left a prominent Buy Tickets button up while the whole
+       season was gone. That matters because the payment form validates NOTHING:
+       its Event Date is a bare date picker with no min, no max and no inventory,
+       so a guest can pay $450 for a dinner that has no seats — and per the stated
+       policy, bookings are final after payment. Hence: sold-out dates are struck
+       through, and the waitlist leads whenever nothing (or almost nothing) is open.
+
+       After editing, deploy with:  python3 _scratch/push-website-multi.py SwanHouse
+       ════════════════════════════════════════════════════════════════════════ */
+    const SEASON_YEAR = 2026;
+    const SEASON = [
+      { month: 'May',       dates: [ {d:16,status:'sold'}, {d:17,status:'sold'}, {d:23,status:'sold'}, {d:24,status:'sold'} ] },
+      { month: 'June',      dates: [ {d:6, status:'sold'}, {d:7, status:'sold'}, {d:13,status:'sold'}, {d:14,status:'sold'} ] },
+      { month: 'July',      dates: [ {d:11,status:'sold'}, {d:12,status:'sold'}, {d:18,status:'sold'}, {d:19,status:'sold'} ] },
+      { month: 'August',    dates: [ {d:8, status:'open', note:'2 seats'}, {d:9, status:'sold'}, {d:15,status:'sold'}, {d:16,status:'sold'} ] },
+      { month: 'September', dates: [ {d:5, status:'sold'}, {d:6, status:'sold'}, {d:12,status:'sold'}, {d:13,status:'sold'} ] },
+    ];
+
+    const TICKET_URL  = 'https://gateway.gravitylink.net/interface/epayform/DkISwXpFde1LvPreJfJ1kBbwXDswqNVr/';
+    const WAITLIST_URL = 'mailto:info@sanfermoseattle.com?subject=SHF%20Farm%20Dinner%20Waitlist';
+
+    (function renderSeason(){
+      const esc = s => String(s == null ? '' : s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+      const open = [];
+      SEASON.forEach(m => m.dates.forEach(x => {
+        if (x.status === 'open') open.push({ month: m.month, d: x.d, note: x.note });
+      }));
+
+      // Schedule rows
+      const months = SEASON.map(m => {
+        const dates = m.dates.map(x => x.status === 'open'
+          ? `<span class="date-open">${x.d}</span>` +
+            (x.note ? `<span class="date-note">${esc(x.note)}</span>` : '')
+          : `<span class="date-sold">${x.d}</span>`).join(', ');
+        return `<div class="schedule-month">` +
+               `<span class="schedule-month-name">${esc(m.month)}</span>` +
+               `<span class="schedule-month-dates">${dates}</span></div>`;
+      }).join('');
+      const monthsEl = document.getElementById('scheduleMonths');
+      if (monthsEl) monthsEl.innerHTML = months;
+
+      const legendEl = document.getElementById('scheduleLegend');
+      if (legendEl) legendEl.textContent = open.length
+        ? 'Crossed-out dates have sold out.'
+        : 'Every date this season has sold out.';
+
+      // Banner
+      let banner;
+      if (!open.length) {
+        banner = `<strong>The ${SEASON_YEAR} season is sold out.</strong> ` +
+                 `Join the waitlist and we'll be in touch if a seat opens, and again when ` +
+                 `${SEASON_YEAR + 1} dates are announced.`;
+      } else {
+        const list = open.map(o => `${o.month} ${o.d}${o.note ? ` (${esc(o.note)})` : ''}`).join(', ');
+        banner = `<strong>Nearly sold out.</strong> ${list} ` +
+                 `${open.length === 1 ? 'is' : 'are'} all that's left for ${SEASON_YEAR}. ` +
+                 `Everything else is gone, so the waitlist is the best way in.`;
+      }
+      const bannerEl = document.getElementById('seasonBanner');
+      if (bannerEl) bannerEl.innerHTML = `<div class="season-banner">${banner}</div>`;
+
+      // CTA: waitlist leads, tickets stay reachable but demoted
+      const ctaEl = document.getElementById('dinnerCta');
+      if (ctaEl) ctaEl.innerHTML =
+        `<a href="${WAITLIST_URL}" class="btn btn-primary">Join the Waitlist</a>` +
+        `<a href="${TICKET_URL}" target="_blank" class="btn btn-demoted">Buy Tickets</a>`;
+
+      const cautionEl = document.getElementById('ctaCaution');
+      if (cautionEl) cautionEl.textContent = open.length
+        ? `Please check the schedule before purchasing — the payment form accepts any date, and bookings are final once payment is confirmed.`
+        : `Please join the waitlist rather than purchasing — the payment form accepts any date, including sold-out ones, and bookings are final once payment is confirmed.`;
+    })();
   </script>
 
 </body>
