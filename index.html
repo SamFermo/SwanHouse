@@ -954,13 +954,36 @@
     const TICKET_URL  = 'https://gateway.gravitylink.net/interface/epayform/DkISwXpFde1LvPreJfJ1kBbwXDswqNVr/';
     const WAITLIST_URL = 'mailto:info@sanfermoseattle.com?subject=SHF%20Farm%20Dinner%20Waitlist';
 
-    (function renderSeason(){
+    /* Rewritten 2026-08-03: renderSeason now takes a model instead of closing over
+       SEASON, so the same code paints the baked-in fallback and, a moment later,
+       whatever the SHF Portal has published. Exposed on window for the module
+       block at the end of the file. */
+    function renderSeason(SEASON){
       const esc = s => String(s == null ? '' : s)
         .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
+      /* A date that has already happened is not availability, whatever the
+         published status says. Without this, the day after the last open date
+         passes the page still announces "August 8 is all that's left" until
+         somebody remembers to flip it. The schedule rows below are unaffected —
+         past dates still render, exactly as before. */
+      const todayIso = (() => {
+        const n = new Date();
+        return n.getFullYear() + '-' + String(n.getMonth()+1).padStart(2,'0') +
+               '-' + String(n.getDate()).padStart(2,'0');
+      })();
+      const MONTH_NUM = { January:1, February:2, March:3, April:4, May:5, June:6, July:7,
+                          August:8, September:9, October:10, November:11, December:12 };
+      const isPast = (monthName, d) => {
+        const m = MONTH_NUM[monthName];
+        if (!m) return false;
+        const iso = SEASON_YEAR + '-' + String(m).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+        return iso < todayIso;
+      };
+
       const open = [];
       SEASON.forEach(m => m.dates.forEach(x => {
-        if (x.status === 'open') open.push({ month: m.month, d: x.d, note: x.note });
+        if (x.status === 'open' && !isPast(m.month, x.d)) open.push({ month: m.month, d: x.d, note: x.note });
       }));
 
       // Schedule rows
@@ -1006,7 +1029,93 @@
       if (cautionEl) cautionEl.textContent = open.length
         ? `Please check the schedule before purchasing — the payment form accepts any date, and bookings are final once payment is confirmed.`
         : `Please join the waitlist rather than purchasing — the payment form accepts any date, including sold-out ones, and bookings are final once payment is confirmed.`;
-    })();
+    }
+
+    // Paint the baked-in schedule immediately. The Firestore read below may
+    // replace it a moment later; it must never be the only thing that renders.
+    renderSeason(SEASON);
+    window.__renderSeason = renderSeason;
+  </script>
+
+  <!-- ── LIVE AVAILABILITY ─────────────────────────────────────────────────────
+       The schedule above is now published from the Swan House Farm Portal, not
+       hand-edited here. A manager opens Dinner Dates, toggles a date open or sold
+       out, and hits Publish; that writes availability/current in the
+       swan-house-checkin project and this block reads it on page load.
+
+       The SEASON array above stays, and it is a REAL fallback: if Firestore is
+       down, App Check rejects us, or the guest is offline, the page renders
+       exactly as it did before. This block only ever replaces good content with
+       newer good content — it never blanks the schedule.
+
+       ⚠ AT DNS CUTOVER: swan-house-checkin has App Check ENFORCED, so this read
+       only succeeds from a domain registered on the reCAPTCHA Enterprise key
+       below. samfermo.github.io is already registered (the portal and the guest
+       pages share it). swanhousefarm.com IS NOT — add it to the key in the
+       Google Cloud console when DNS moves, or the site will quietly fall back to
+       the baked-in dates and Tim's publishing will stop reaching the public.
+       Added 2026-08-03. ──────────────────────────────────────────────────────── -->
+  <script type="module">
+  (async () => {
+    const CFG = {
+      apiKey: "AIzaSyDEOMCOO0EH1RV4vogLF4aOWD0e52dsOOI",
+      authDomain: "swan-house-checkin.firebaseapp.com",
+      projectId: "swan-house-checkin",
+      storageBucket: "swan-house-checkin.firebasestorage.app",
+      messagingSenderId: "743743999844",
+      appId: "1:743743999844:web:e124dd6fa5f791f87b7471"
+    };
+    const MONTHS = ['January','February','March','April','May','June','July',
+                    'August','September','October','November','December'];
+
+    // Flat [{date:'2026-08-08',status,note}] -> the month model renderSeason wants.
+    function toModel(dates) {
+      const out = [], idx = {};
+      dates.slice()
+        .filter(x => x && typeof x.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(x.date))
+        .sort((a, b) => a.date < b.date ? -1 : 1)
+        .forEach(x => {
+          const p = x.date.split('-');
+          const name = MONTHS[(+p[1]) - 1];
+          if (!name) return;
+          if (!(name in idx)) { idx[name] = out.length; out.push({ month: name, dates: [] }); }
+          out[idx[name]].dates.push({
+            d: +p[2],
+            status: x.status === 'open' ? 'open' : 'sold',
+            note: x.note || undefined
+          });
+        });
+      return out;
+    }
+
+    try {
+      const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
+      const fs = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+      // NAMED app — keeps this isolated from anything else that might ever
+      // initialize Firebase on this page.
+      const app = initializeApp(CFG, 'swanhouse-site');
+      // App Check is enforced on this project; without a token the read is
+      // rejected before the rules are even consulted. Same reCAPTCHA Enterprise
+      // key as the portal and the guest pages.
+      try {
+        const ac = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js');
+        ac.initializeAppCheck(app, {
+          provider: new ac.ReCaptchaEnterpriseProvider('6LeCgjAtAAAAABX8x9jbb3tkOXmmQ5UvNZD1RL2_'),
+          isTokenAutoRefreshEnabled: true
+        });
+      } catch (e) { /* non-blocking; the read below may still work unenforced */ }
+
+      const db = fs.getFirestore(app);
+      // availability/current is public-read by rule, so no sign-in is needed.
+      const snap = await fs.getDoc(fs.doc(db, 'availability', 'current'));
+      if (!snap.exists()) return;
+      const model = toModel((snap.data() || {}).dates || []);
+      // A published-but-empty doc must not wipe the schedule off the page.
+      if (model.length && window.__renderSeason) window.__renderSeason(model);
+    } catch (e) {
+      /* keep the baked-in schedule */
+    }
+  })();
   </script>
 
 </body>
