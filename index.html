@@ -967,7 +967,7 @@
       const months = SEASON.map(m => {
         const dates = m.dates.map(x => x.status === 'open'
           ? `<span class="date-open">${x.d}</span>` +
-            (x.note ? `<span class="date-note">${esc(x.note)}</span>` : '')
+            (x.note ? `<span class="date-note">(${esc(x.note)})</span>` : '')
           : `<span class="date-sold">${x.d}</span>`).join(', ');
         return `<div class="schedule-month">` +
                `<span class="schedule-month-name">${esc(m.month)}</span>` +
