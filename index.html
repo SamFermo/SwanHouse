@@ -425,6 +425,34 @@
       line-height: 1.85; color: var(--warm-gray); margin-bottom: 2rem;
     }
 
+    .farmstand-status {
+      margin-top: 1.25rem; padding: 0.85rem 1.25rem; display: inline-block;
+      border-radius: 4px; font-size: 0.95rem; letter-spacing: 0.01em;
+      background: rgba(255,255,255,0.55); border: 1px solid rgba(0,0,0,0.08);
+    }
+    .farmstand-status.is-open   { background: #e8efe2; border-color: #b9cba8; }
+    .farmstand-status.is-closed { background: #efe9e2; border-color: #cfc2b2; }
+    .farmstand-status strong { font-weight: 600; }
+
+    /* ── NEWSLETTER ── */
+    .signup { background: var(--forest); color: #f6f3ec; padding: 5rem 1.5rem; text-align: center; }
+    .signup h3 { font-family: 'Cormorant Garamond', Georgia, serif; font-size: clamp(1.7rem, 3vw, 2.3rem); font-weight: 400; margin: 0 0 0.65rem; }
+    .signup p { max-width: 34rem; margin: 0 auto 1.75rem; opacity: 0.85; font-size: 0.98rem; line-height: 1.65; }
+    .signup-form { display: flex; gap: 0.6rem; max-width: 26rem; margin: 0 auto; flex-wrap: wrap; justify-content: center; }
+    .signup-form input {
+      flex: 1 1 15rem; padding: 0.85rem 1rem; border: 1px solid rgba(255,255,255,0.35);
+      background: rgba(255,255,255,0.08); color: #f6f3ec; font: inherit; font-size: 0.95rem; border-radius: 3px;
+    }
+    .signup-form input::placeholder { color: rgba(246,243,236,0.55); }
+    .signup-form input:focus { outline: none; border-color: rgba(255,255,255,0.7); }
+    .signup-form button {
+      padding: 0.85rem 1.6rem; border: 1px solid #f6f3ec; background: #f6f3ec; color: var(--forest);
+      font: inherit; font-size: 0.85rem; letter-spacing: 0.09em; text-transform: uppercase;
+      cursor: pointer; border-radius: 3px;
+    }
+    .signup-form button:disabled { opacity: 0.6; cursor: default; }
+    .signup-msg { margin-top: 1rem; font-size: 0.92rem; min-height: 1.4em; }
+
     /* ── FAQ ── */
     .faq { background: var(--cream); }
     .faq .section-inner { max-width: 750px; }
@@ -531,6 +559,7 @@
       <li><a href="#dinners">Farm Dinners</a></li>
       <li><a href="#farmstand">Farm Stand</a></li>
       <li><a href="#faq">FAQ</a></li>
+      <li><a href="#signup">Mailing List</a></li>
       <li><a href="https://www.sanfermoseattle.com" target="_blank">San Fermo</a></li>
       <li><a href="mailto:info@sanfermoseattle.com?subject=SHF%20General%20Inquiry" class="nav-cta">Contact Us</a></li>
     </ul>
@@ -566,6 +595,8 @@
           <span class="section-label">Our Farm</span>
           <h2 class="section-heading">34 acres on the Skagit River</h2>
           <p>We manage orchards, pastures, a market garden, and woodlands. We raise sheep, cattle, hogs, and free range fowl. This land has been farmed for generations before us. We took it on in 2021, and it's the backbone of everything we cook at San Fermo.</p>
+          <p>Tim and Kelly Baker bought the 140-year-old Anderson farm to support the restaurant and to build a more honest relationship with land, food, and family. We renamed it Swan House Farm after the cottage Frederick Anderson built in the 1880s for Swann Olsen — the two men survived a mining accident together, Swann reportedly saved Frederick's life, and Frederick returned the favor by making him a permanent member of the family and giving him a home on the property.</p>
+          <p>Today the family works the farm with their two younger sons and daughter-in-law, tending the garden, caring for the animals, and mending fences. Each year they plan the garden and livestock projects with their eldest son Sam, the chef at San Fermo, around what he wants to put on the restaurant menu and on the farm dinner table.</p>
           <p>Most of what we grow and raise goes directly to the restaurant. What's left stocks our seasonal farm stand, where neighbors and visitors can pick up prepared foods, fresh produce, and farm products.</p>
           <p>In summer, we open the farm for dinners, picnics, and visits. It's the best way to see where your food comes from and spend an evening in a place that feels a long way from the city.</p>
         </div>
@@ -579,7 +610,7 @@
       <div class="land-item">
         <img src="images/lamb-800.jpg" alt="Spring lamb on pasture" loading="lazy">
         <h4>Livestock</h4>
-        <p>Sheep, cattle, Duroc hogs, and free range poultry. All raised on pasture, processed on-site or at local facilities.</p>
+        <p>Corriedale, Suffolk and Southdown cross sheep. Grass-fed angus from our own pastures and neighbouring ranches on Pleasant Ridge. Apple and nut finished Duroc hogs. Free range ducks, chickens and geese. All raised on pasture, processed on-site or at local facilities.</p>
       </div>
       <div class="land-item">
         <img src="images/greenhouse-800.jpg" alt="Greenhouse with spring seedlings" loading="lazy">
@@ -808,6 +839,10 @@
       <h2 class="section-heading">Explore the farm, enjoy the afternoon</h2>
       <p>Explore the property and enjoy a sumptuous picnic basket provided by San Fermo. Available May through September for groups of 2 to 8 guests. Reach out for details and availability.</p>
       <a href="mailto:info@sanfermoseattle.com?subject=SHF%20Picnic%20Reservation" class="btn btn-outline-dark">Inquire About Picnics</a>
+      <!-- Rescued from Wix 2026-08-05 and now self-hosted. It is the only place the
+           3pm hard stop, the bring-your-own-wine rules, the dog policy and the
+           invoice-on-the-Monday booking terms are written down anywhere. -->
+      <p style="margin-top:1.25rem; font-size:0.9rem;"><a href="picnic-faq.pdf" target="_blank" class="prose-link">Read the picnic FAQ</a> — what's included, wine and dog policies, and how booking works.</p>
     </div>
   </section>
 
@@ -815,7 +850,13 @@
   <div class="farmstand" id="farmstand">
     <span class="section-label">Farm Stand</span>
     <h2>From the farm and the restaurant</h2>
-    <p>Our seasonal farm store stocks products made at San Fermo with farm ingredients, plus fresh produce and goods straight from the property. Currently closed for the season.</p>
+    <p>Our seasonal farm store stocks products made at San Fermo with farm ingredients, plus fresh produce and goods straight from the property.</p>
+    <!-- Farm stand status is published from the SHF Portal (Farm Stand screen) into
+         Firestore farmstand/current. The text below is the offline fallback and is
+         deliberately vague about hours, because stale specific hours are worse than
+         none — a guest who drives out to a closed stand had better not have read a
+         precise time here. Added 2026-08-05. -->
+    <p class="farmstand-status" id="farmstandStatus">Open seasonally. Please check before making the drive.</p>
     <div class="farmstand-columns fade-in">
       <div class="farmstand-col">
         <h4>From San Fermo</h4>
@@ -861,11 +902,39 @@
           <div class="faq-answer">Paired wine and bubbles are included in the ticket price. Non-alcoholic wine is available as well.</div>
         </div>
         <div class="faq-item">
-          <button class="faq-question">Terrain &amp; safety</button>
-          <div class="faq-answer">There are walking paths over rough ground and optional access to livestock areas during farm tours. Guests with significant allergies to bees, wasps, or other stinging insects are encouraged to take appropriate precautions.</div>
+          <button class="faq-question">Terrain, livestock &amp; safety</button>
+          <div class="faq-answer">There are walking paths over rough and uneven ground. Guests are offered access to livestock areas during farm tours; taking part is optional, and guests who do so accept the risks that come with being around working farm animals. Guests with significant allergies to bees, wasps or other stinging insects are encouraged to take appropriate precautions.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question">Bathrooms</button>
+          <div class="faq-answer">The farm runs on a limited septic system, so guests are asked to use temporary restrooms during the event.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question">Valuables</button>
+          <div class="faq-answer">Please keep your valuables with you. The farm and the restaurant can't take responsibility for anything lost on the property.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question">Photos &amp; sharing</button>
+          <div class="faq-answer">We'd love you to take pictures and share your evening. We appreciate the support.</div>
         </div>
       </div>
     </div>
+  </section>
+
+  <!-- MAILING LIST -->
+  <!-- The old Wix site collected signups on every page and the farm dinner copy sent
+       people here for 2027 ticket announcements; the rebuilt site had no capture at
+       all, which would have quietly cost us every new subscriber. Writes to Firestore
+       subscribers/ — create-only from the browser, so the list can never be read back
+       out of a public page. Added 2026-08-05. -->
+  <section class="signup" id="signup">
+    <h3>Join the mailing list</h3>
+    <p>Farm dinner dates, openings when a seat comes back, and first word on next season's tickets. A few emails a year, nothing more.</p>
+    <form class="signup-form" id="signupForm" novalidate>
+      <input type="email" id="signupEmail" placeholder="Your email address" autocomplete="email" required>
+      <button type="submit" id="signupBtn">Join</button>
+    </form>
+    <div class="signup-msg" id="signupMsg" role="status" aria-live="polite"></div>
   </section>
 
   <!-- FOOTER -->
@@ -873,7 +942,8 @@
     <div class="footer-grid">
       <div class="footer-brand">
         <h3>Swan House Farm</h3>
-        <p>A family farm on the Skagit River.<br>La Conner, Washington.</p>
+        <p>A family farm on the Skagit River.</p>
+        <p>19479 Landing Rd.<br>Mount Vernon, WA 98273</p>
       </div>
       <div class="footer-col">
         <h4>Connect</h4>
@@ -1114,14 +1184,100 @@
       } catch (e) { /* non-blocking; the read below may still work unenforced */ }
 
       const db = fs.getFirestore(app);
+
+      // ---- Dinner dates -------------------------------------------------
       // availability/current is public-read by rule, so no sign-in is needed.
-      const snap = await fs.getDoc(fs.doc(db, 'availability', 'current'));
-      if (!snap.exists()) return;
-      const model = toModel((snap.data() || {}).dates || []);
-      // A published-but-empty doc must not wipe the schedule off the page.
-      if (model.length && window.__renderSeason) window.__renderSeason(model);
+      try {
+        const snap = await fs.getDoc(fs.doc(db, 'availability', 'current'));
+        if (snap.exists()) {
+          const model = toModel((snap.data() || {}).dates || []);
+          // A published-but-empty doc must not wipe the schedule off the page.
+          if (model.length && window.__renderSeason) window.__renderSeason(model);
+        }
+      } catch (e) { /* keep the baked-in schedule */ }
+
+      // ---- Farm stand status --------------------------------------------
+      // A temporary closure carries an end date and the comparison happens HERE, on
+      // read. So the stand re-opens by itself the day after closedUntil and nobody
+      // has to remember to switch it back — which is the entire reason it exists.
+      try {
+        const fsnap = await fs.getDoc(fs.doc(db, 'farmstand', 'current'));
+        const el = document.getElementById('farmstandStatus');
+        if (fsnap.exists() && el) {
+          const d = fsnap.data() || {};
+          const esc = t => String(t == null ? '' : t)
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+          const now = new Date();
+          const todayIso = now.getFullYear() + '-' +
+            String(now.getMonth()+1).padStart(2,'0') + '-' +
+            String(now.getDate()).padStart(2,'0');
+          const pretty = iso => {
+            const p = String(iso).split('-');
+            return new Date(+p[0], +p[1]-1, +p[2])
+              .toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' });
+          };
+          let html = '', cls = '';
+          if (d.season !== 'open') {
+            cls = 'is-closed';
+            html = '<strong>The farm stand is closed for the season.</strong>' +
+                   (d.note ? ' ' + esc(d.note) : '');
+          } else if (d.closedUntil && String(d.closedUntil) >= todayIso) {
+            cls = 'is-closed';
+            html = '<strong>Temporarily closed.</strong> Back open ' +
+                   esc(pretty(d.closedUntil)) + '.' +
+                   (d.closureNote ? ' ' + esc(d.closureNote) : '');
+          } else {
+            cls = 'is-open';
+            html = '<strong>Open ' + esc(d.days || '') + '</strong>' +
+                   (d.hours ? ', ' + esc(d.hours) : '') + '.' +
+                   (d.note ? ' ' + esc(d.note) : '');
+          }
+          el.className = 'farmstand-status ' + cls;
+          el.innerHTML = html;
+        }
+      } catch (e) { /* keep the cautious fallback line */ }
+
+      // ---- Mailing list signup ------------------------------------------
+      // subscribers/ is create-only for the browser: it can add an address and can
+      // do nothing else, so a public page can never be used to read the list back.
+      const form = document.getElementById('signupForm');
+      if (form) {
+        const auth = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
+        form.addEventListener('submit', async (ev) => {
+          ev.preventDefault();
+          const input = document.getElementById('signupEmail');
+          const btn = document.getElementById('signupBtn');
+          const msg = document.getElementById('signupMsg');
+          const email = (input.value || '').trim().toLowerCase();
+          if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(email)) {
+            msg.textContent = 'That address does not look right — mind checking it?';
+            return;
+          }
+          btn.disabled = true; msg.textContent = 'One moment…';
+          try {
+            const a = auth.getAuth(app);
+            if (!a.currentUser) await auth.signInAnonymously(a);
+            await fs.addDoc(fs.collection(db, 'subscribers'), {
+              email: email,
+              source: 'swanhousefarm.com',
+              createdAt: new Date().toISOString()
+            });
+            form.style.display = 'none';
+            msg.textContent = "You're on the list. We'll be in touch.";
+          } catch (e) {
+            btn.disabled = false;
+            // Never claim success we did not get. The old rebuilt form said "Thanks!"
+            // and threw the address away; that is the failure being fixed here.
+            msg.innerHTML = 'Sorry — that did not save. Please email ' +
+              '<a href="mailto:info@sanfermoseattle.com?subject=SHF%20Mailing%20List" ' +
+              'style="color:inherit;text-decoration:underline">info@sanfermoseattle.com</a> ' +
+              'and we will add you by hand.';
+            console.error('signup failed:', e);
+          }
+        });
+      }
     } catch (e) {
-      /* keep the baked-in schedule */
+      /* keep the baked-in schedule and the fallback farm stand line */
     }
   })();
   </script>
