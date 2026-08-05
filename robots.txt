@@ -1,0 +1,15 @@
+# Swan House Farm — swanhousefarm.com
+# Canonical host is www. The apex redirects to it (GitHub Pages does this once the
+# custom domain is set), and every canonical/og:url in the site says www, so the
+# sitemap below must say www too or the two disagree about which URL is real.
+
+User-agent: *
+Allow: /
+
+# The /copy-of-* , /gallery, /contact, /blog-1 and /members paths are redirect stubs
+# preserving the old Wix URLs. They are DELIBERATELY crawlable. Each one carries
+# `noindex, follow` plus a canonical to the section it moved to, and a crawler has to
+# be able to FETCH a page to see its noindex — blocking them here would leave Google
+# holding the old URLs with no instruction, which is the opposite of the intent.
+
+Sitemap: https://www.swanhousefarm.com/sitemap.xml

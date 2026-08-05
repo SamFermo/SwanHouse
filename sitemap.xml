@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  One page, and that is correct rather than lazy: the site is a single document and the
+  nav scrolls to anchors within it. Fragment URLs (#farm, #dinners) do not belong in a
+  sitemap — they are not separate documents and Google discards them.
+
+  The redirect stubs are deliberately absent for the same reason a sitemap is a list of
+  what you WANT indexed: they are noindex by design.
+
+  The picnic FAQ is here because it is real, self-hosted content a guest may search for,
+  and it was rescued off Wix on 2026-08-04 precisely so it would survive the migration.
+
+  lastmod is the date the content genuinely changed. If you edit the site, move it. A
+  lastmod that is always "today" teaches Google to ignore the field entirely.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://www.swanhousefarm.com/</loc>
+    <lastmod>2026-08-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://www.swanhousefarm.com/picnic-faq.pdf</loc>
+    <lastmod>2026-08-04</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+</urlset>
