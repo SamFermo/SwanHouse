@@ -561,6 +561,7 @@
       .hero-content { padding: 0 1.25rem !important; }
       .hero-content .hl { display: block; line-height: 1.7; font-size: 0.78rem; letter-spacing: 0.02em; }
     }
+    .offseason-copy { font-family: var(--font-sans); font-size: 0.92rem; font-weight: 300; line-height: 1.7; color: var(--charcoal); margin: 0 0 0.9rem; }
   </style>
 </head>
 <body>
@@ -656,11 +657,11 @@
           <p class="cta-caution" id="ctaCaution"></p>
         </div>
         <div class="dinners-schedule fade-in">
-          <h3>2026 Schedule</h3>
+          <h3 id="scheduleTitle">2026 Schedule</h3>
           <div id="seasonBanner"></div>
           <div id="scheduleMonths"></div>
           <p class="schedule-legend" id="scheduleLegend"></p>
-          <div class="schedule-note">
+          <div class="schedule-note" id="scheduleNote">
             <p><strong>Tickets:</strong> $450 per ticket, admits two guests. Includes reception, 5-course paired wine dinner, tax, and service.</p>
             <p><strong>Giving back:</strong> $50 from each ticket in 2026 goes to farmers impacted by the 2025 flood.</p>
             <p style="margin-top: 0.75rem; font-style: italic; font-size: 0.8rem;">Events often sell out before menus are published. <a href="mailto:info@sanfermoseattle.com?subject=SHF%20Farm%20Dinner%20Waitlist" class="prose-link">Email to join the waitlist</a> for sold-out dates.</p>
@@ -1044,7 +1045,33 @@
        SEASON, so the same code paints the baked-in fallback and, a moment later,
        whatever the SHF Portal has published. Exposed on window for the module
        block at the end of the file. */
+    /* OFF-SEASON SWITCH, added 2026-09-19. While true, the schedule card shows the
+       "season has ended" note instead of dates, and the button points at the mailing
+       list. It also overrides whatever the portal publishes, so old dates cannot
+       come back. When next year's dates are ready: set this to false, then update
+       SEASON_YEAR and SEASON above (or publish the dates from the portal). */
+    const OFF_SEASON = true;
+
+    function renderOffSeason(){
+      const set = (id, fn) => { const el = document.getElementById(id); if (el) fn(el); };
+      set('scheduleTitle', el => el.textContent = (SEASON_YEAR + 1) + ' Season');
+      set('seasonBanner', el => el.innerHTML =
+        `<div class="season-banner"><strong>The ${SEASON_YEAR} season has ended.</strong> ` +
+        `Thank you to everyone who joined us in the garden this year.</div>`);
+      set('scheduleMonths', el => el.innerHTML =
+        `<p class="offseason-copy">Dates for ${SEASON_YEAR + 1} will be announced around New Year's. ` +
+        `Our mailing list hears first, and the dinners tend to sell out quickly, so that is the best way to get a seat.</p>` +
+        `<p class="offseason-copy">Stay tuned, and <a href="#signup" class="prose-link">sign up for the newsletter</a> ` +
+        `to get the dates as soon as they are set.</p>`);
+      set('scheduleLegend', el => el.textContent = '');
+      set('scheduleNote', el => el.style.display = 'none');
+      set('dinnerCta', el => el.innerHTML =
+        `<a href="#signup" class="btn btn-primary">Join the Mailing List</a>`);
+      set('ctaCaution', el => el.textContent = '');
+    }
+
     function renderSeason(SEASON){
+      if (OFF_SEASON) { renderOffSeason(); return; }
       const esc = s => String(s == null ? '' : s)
         .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
