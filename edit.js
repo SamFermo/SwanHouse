@@ -60,12 +60,12 @@ function sig(obj) {
     for (let i = shuffled.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; }
     const out = new Array(slots.length); const used = new Set();
     slots.forEach((s, i) => {
-      if (s !== 'wide') return;
-      const p = shuffled.find((x) => !used.has(x.id) && x.w > x.h);
+      if (s !== 'wide' && s !== 'tall') return;
+      const p = shuffled.find((x) => !used.has(x.id) && (s === 'wide' ? x.w > x.h : x.h > x.w));
       if (p) { out[i] = p; used.add(p.id); }
     });
     slots.forEach((s, i) => {
-      if (out[i] || s === 'wide') return;
+      if (out[i] || s === 'wide' || s === 'tall') return;
       const p = shuffled.find((x) => !used.has(x.id));
       if (p) { out[i] = p; used.add(p.id); }
     });
