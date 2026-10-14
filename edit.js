@@ -87,8 +87,39 @@ function mergePublish(live, baseline, now, baseHidden, hidden) {
   return { blocks, hiddenPhotos: [...set] };
 }
 
-export { sanitize, snapshot, diffKeys, sig, assignSlots, mergePublish };
-if (typeof window !== 'undefined') window.SiteEdit = { sanitize, snapshot, diffKeys, sig, assignSlots, mergePublish };
+// ── Farm schedule + stand (Swan House only) ───────────────────────────────────
+// These write the SAME records, in the SAME shape, as the farm portal's Dinner Dates and
+// Farm Stand screens, so either tool can be used and the last save wins. Added 2026-10-14.
+// FOLLOW-UP (Sam, 2026-10-14): once farm dinner tickets sell through OpenTable, sold-out
+// dates should update themselves from OpenTable instead of being set by hand here.
+const ISO = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+function availabilityPayload(rows, who) {
+  const byDate = {};
+  (rows || []).forEach((r) => {
+    const date = String(r.date || '').trim();
+    if (!ISO.test(date)) return;
+    byDate[date] = { date, status: r.status === 'open' ? 'open' : 'sold', note: String(r.note || '').trim().slice(0, 60) };
+  });
+  const dates = Object.keys(byDate).sort().map((d) => byDate[d]);
+  if (!dates.length) return null;
+  return { season: Math.min(...dates.map((d) => +d.date.slice(0, 4))), dates, publishedAt: new Date().toISOString(), publishedBy: who };
+}
+function farmstandPayload(f, who) {
+  const t = (v, n) => String(v || '').trim().slice(0, n || 80);
+  const cu = t(f.closedUntil, 10);
+  return { season: f.season === 'closed' ? 'closed' : 'open', days: t(f.days), hours: t(f.hours), note: t(f.note, 120),
+           closedUntil: ISO.test(cu) ? cu : '', closureNote: t(f.closureNote, 60), publishedAt: new Date().toISOString(), publishedBy: who };
+}
+function editorName(email) {
+  const e = String(email || '').toLowerCase();
+  if (e.startsWith('kelly')) return 'Kelly';
+  if (e.startsWith('tim@')) return 'Tim';
+  if (e.startsWith('sam') || e.startsWith('samuel')) return 'Sam';
+  return 'Website editor';
+}
+
+export { sanitize, snapshot, diffKeys, sig, assignSlots, mergePublish, availabilityPayload, farmstandPayload, editorName };
+if (typeof window !== 'undefined') window.SiteEdit = { sanitize, snapshot, diffKeys, sig, assignSlots, mergePublish, availabilityPayload, farmstandPayload, editorName };
 
 // ── UI ───────────────────────────────────────────────────────────────────────
 const CSS = `
@@ -137,6 +168,17 @@ body.se-on{padding-bottom:var(--se-bar-h,70px)}
 .se-on a[data-copy],.se-on [data-copy] a,.se-on button[data-copy]{cursor:text}
 .se-toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#2d6a4f;color:#fff;padding:10px 16px;border-radius:8px;z-index:100001;font:15px -apple-system,system-ui,sans-serif;max-width:90vw}
 .se-toast.se-err{background:#a8311e}
+.se-panel{position:fixed;left:0;right:0;bottom:var(--se-bar-h,62px);max-height:70vh;overflow:auto;background:#f7f3ec;color:#222;z-index:99998;padding:16px;font:15px/1.45 -apple-system,system-ui,sans-serif;box-shadow:0 -6px 24px rgba(0,0,0,.2)}
+.se-panel h3{margin:0 0 6px;font-size:18px}
+.se-panel .se-hint{margin:0 0 12px;color:#555;font-size:14px}
+.se-panel label{display:block;font-size:13px;color:#444;margin:10px 0 3px}
+.se-panel input,.se-panel select{font:inherit;padding:7px 8px;border:1px solid #bbb;border-radius:6px;background:#fff;box-sizing:border-box;max-width:100%}
+.se-panel .se-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0}
+.se-panel .se-row input[type=date]{width:150px}.se-panel .se-row input.se-note{flex:1 1 140px}
+.se-panel .se-x{background:none;border:0;font-size:20px;color:#a8311e;cursor:pointer;padding:0 6px}
+.se-panel .se-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;position:sticky;bottom:-16px;background:#f7f3ec;padding:10px 0}
+.se-panel .se-btn{color:#222;border-color:#222}.se-panel .se-btn.se-pri{color:#fff;border-color:#b04a1a}
+.se-panel .se-switch{display:flex;gap:16px;flex-wrap:wrap}.se-panel .se-switch label{display:flex;gap:6px;align-items:center;margin:0;font-size:15px;color:#222}
 `;
 
 const state = { app: null, db: null, auth: null, fs: null, user: null, baseline: null, baseHidden: [], hidden: [], current: null, manifest: [], on: false };
@@ -250,13 +292,17 @@ async function enterEditMode() {
   }, true);
   const bar = el('div', { className: 'se-bar' });
   bar.innerHTML = `<b>Editing ${window.SITE_NAME}</b><span class="se-status">0 blocks changed</span><span class="se-sp"></span>
-    <button class="se-btn se-photos-btn">Photos</button><button class="se-btn se-undo"><span class="se-long">Undo last publish</span><span class="se-short">Undo</span></button>
+    <button class="se-btn se-photos-btn">Photos</button>${window.SITE === 'swanhouse' ? '<button class="se-btn se-dates-btn">Dinner Dates</button><button class="se-btn se-stand-btn">Farm Stand</button>' : ''}<button class="se-btn se-undo"><span class="se-long">Undo last publish</span><span class="se-short">Undo</span></button>
     <button class="se-btn se-pri se-publish" disabled>Publish</button><button class="se-btn se-done">Done</button>`;
   document.body.appendChild(bar);
   bar.querySelector('.se-publish').onclick = publish;
   bar.querySelector('.se-undo').onclick = undo;
   bar.querySelector('.se-done').onclick = () => { if (dirtyCount() && !confirm('You have unpublished changes. Leave anyway?')) return; location.href = location.pathname; };
   bar.querySelector('.se-photos-btn').onclick = togglePhotos;
+  if (window.SITE === 'swanhouse') {
+    bar.querySelector('.se-dates-btn').onclick = () => openPanel(datesPanel);
+    bar.querySelector('.se-stand-btn').onclick = () => openPanel(standPanel);
+  }
   // Leave exactly enough room under the page for the bar, whatever it wraps to on a phone.
   const fit = () => document.documentElement.style.setProperty('--se-bar-h', (bar.offsetHeight + 8) + 'px');
   fit(); window.addEventListener('resize', fit);
@@ -348,7 +394,88 @@ async function undo() {
   } catch (e) { fail('Undo failed: ' + (e.code || e.message)); }
 }
 
+// ── Dinner Dates + Farm Stand panels ───────────────────────────────────────────
+async function openPanel(build) {
+  document.querySelector('.se-photos')?.remove();
+  const ex = document.querySelector('.se-panel'); const same = ex && ex.dataset.kind === build.name; ex?.remove();
+  if (same) return;
+  const p = el('div', { className: 'se-panel' }); p.dataset.kind = build.name; p.innerHTML = '<p>Loading…</p>';
+  document.body.appendChild(p);
+  try { await build(p); } catch (e) { p.innerHTML = ''; fail('Could not load: ' + (e.code || e.message)); p.remove(); }
+}
+function esc(v) { return String(v == null ? '' : v).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+async function datesPanel(p) {
+  const { doc, getDoc, setDoc } = state.fs;
+  const [cur, sea] = await Promise.all([getDoc(doc(state.db, 'availability', 'current')), getDoc(doc(state.db, 'availability', 'season'))]);
+  const rows = cur.exists() ? ((cur.data() || {}).dates || []) : [];
+  const off = sea.exists() ? !!(sea.data() || {}).offSeason : (window.__farmOffSeasonDefault !== false);
+  p.innerHTML = `<h3>Dinner dates</h3>
+    <p class="se-hint">Saves straight to the website (and the farm portal sees the same list). Sold-out dates show crossed out; open dates show the ticket button.</p>
+    <div class="se-switch"><label><input type="radio" name="se-season" value="on" ${off ? '' : 'checked'}> Season is on: show the dates</label>
+      <label><input type="radio" name="se-season" value="off" ${off ? 'checked' : ''}> Off season: show the "season has ended" box</label></div>
+    <div class="se-rows"></div>
+    <button class="se-btn se-add" style="margin-top:6px">+ Add a date</button>
+    <div class="se-actions"><button class="se-btn se-close">Close</button><button class="se-btn se-pri se-save">Save dates</button></div>`;
+  const box = p.querySelector('.se-rows');
+  const addRow = (r) => {
+    const row = el('div', { className: 'se-row' });
+    row.innerHTML = `<input type="date" value="${esc(r.date)}"><select><option value="open">Open</option><option value="sold">Sold out</option></select>
+      <input class="se-note" maxlength="60" placeholder="note, e.g. 2 seats left" value="${esc(r.note)}"><button class="se-x" title="Remove">×</button>`;
+    row.querySelector('select').value = r.status === 'open' ? 'open' : 'sold';
+    row.querySelector('.se-x').onclick = () => row.remove();
+    box.appendChild(row);
+  };
+  rows.slice().sort((a, b) => (a.date < b.date ? -1 : 1)).forEach(addRow);
+  if (!rows.length) addRow({ date: '', status: 'open', note: '' });
+  p.querySelector('.se-add').onclick = () => addRow({ date: '', status: 'open', note: '' });
+  p.querySelector('.se-close').onclick = () => p.remove();
+  p.querySelector('.se-save').onclick = async () => {
+    const who = editorName(state.user && state.user.email);
+    const list = [...box.querySelectorAll('.se-row')].map((r) => ({ date: r.querySelector('input[type=date]').value, status: r.querySelector('select').value, note: r.querySelector('.se-note').value }));
+    const payload = availabilityPayload(list, who);
+    const offNow = p.querySelector('input[name=se-season]:checked').value === 'off';
+    if (!payload && !offNow) { fail('Add at least one date before turning the season on.'); return; }
+    try {
+      if (payload) await setDoc(doc(state.db, 'availability', 'current'), payload);
+      const seasonDoc = { offSeason: offNow, publishedAt: new Date().toISOString(), publishedBy: who };
+      await setDoc(doc(state.db, 'availability', 'season'), seasonDoc);
+      if (window.__applyAvailability) window.__applyAvailability(payload, seasonDoc);
+      toast('Dinner dates saved. Guests see them on their next visit.'); p.remove();
+    } catch (e) { fail("Couldn't save the dates: " + (e.code || e.message)); }
+  };
+}
+
+async function standPanel(p) {
+  const { doc, getDoc, setDoc } = state.fs;
+  const snap = await getDoc(doc(state.db, 'farmstand', 'current'));
+  const d = Object.assign({ season: 'open', days: 'Wednesday–Sunday', hours: '12–5pm', note: '', closedUntil: '', closureNote: '' }, snap.exists() ? snap.data() : {});
+  p.innerHTML = `<h3>Farm stand</h3>
+    <p class="se-hint">Saves straight to the website (and the farm portal sees the same setting).</p>
+    <div class="se-switch"><label><input type="radio" name="se-fs" value="open" ${d.season === 'closed' ? '' : 'checked'}> Open this season</label>
+      <label><input type="radio" name="se-fs" value="closed" ${d.season === 'closed' ? 'checked' : ''}> Closed for the season</label></div>
+    <label>Days open</label><input data-k="days" value="${esc(d.days)}" style="width:100%">
+    <label>Hours</label><input data-k="hours" value="${esc(d.hours)}" style="width:100%">
+    <label>Note shown after the hours (optional)</label><input data-k="note" maxlength="120" value="${esc(d.note)}" style="width:100%">
+    <label>Closed for a few days? Back open on (optional; it reopens by itself that morning)</label>
+    <div class="se-row"><input type="date" data-k="closedUntil" value="${esc(d.closedUntil)}"><input class="se-note" data-k="closureNote" maxlength="60" placeholder="reason, optional" value="${esc(d.closureNote)}"><button class="se-x se-clear" title="Clear">×</button></div>
+    <div class="se-actions"><button class="se-btn se-close">Close</button><button class="se-btn se-pri se-save">Save farm stand</button></div>`;
+  p.querySelector('.se-clear').onclick = () => { p.querySelector('[data-k=closedUntil]').value = ''; p.querySelector('[data-k=closureNote]').value = ''; };
+  p.querySelector('.se-close').onclick = () => p.remove();
+  p.querySelector('.se-save').onclick = async () => {
+    const f = { season: p.querySelector('input[name=se-fs]:checked').value };
+    p.querySelectorAll('[data-k]').forEach((i) => { f[i.dataset.k] = i.value; });
+    const payload = farmstandPayload(f, editorName(state.user && state.user.email));
+    try {
+      await setDoc(doc(state.db, 'farmstand', 'current'), payload);
+      if (window.__applyFarmstand) window.__applyFarmstand(payload);
+      toast('Farm stand saved. Guests see it on their next visit.'); p.remove();
+    } catch (e) { fail("Couldn't save the farm stand: " + (e.code || e.message)); }
+  };
+}
+
 async function togglePhotos() {
+  document.querySelector('.se-panel')?.remove();
   const ex = document.querySelector('.se-photos'); if (ex) { ex.remove(); return; }
   if (!state.manifest.length) {
     try { state.manifest = await (await fetch('images/pool/manifest.json', { cache: 'no-cache' })).json(); } catch (e) { state.manifest = []; }

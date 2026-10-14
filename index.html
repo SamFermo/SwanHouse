@@ -1032,7 +1032,7 @@
 
        After editing, deploy with:  python3 _scratch/push-website-multi.py SwanHouse
        ════════════════════════════════════════════════════════════════════════ */
-    const SEASON_YEAR = 2026;
+    let SEASON_YEAR = 2026;   // replaced from the published dates when they load
     const SEASON = [
       { month: 'May',       dates: [ {d:16,status:'sold'}, {d:17,status:'sold'}, {d:23,status:'sold'}, {d:24,status:'sold'} ] },
       { month: 'June',      dates: [ {d:6, status:'sold'}, {d:7, status:'sold'}, {d:13,status:'sold'}, {d:14,status:'sold'} ] },
@@ -1053,7 +1053,11 @@
        list. It also overrides whatever the portal publishes, so old dates cannot
        come back. When next year's dates are ready: set this to false, then update
        SEASON_YEAR and SEASON above (or publish the dates from the portal). */
-    const OFF_SEASON = true;
+    // Baked default. The live value comes from availability/season, which the editor's
+    // Dinner Dates panel sets (separate record so a farm-portal save can't wipe it).
+    let OFF_SEASON = true;
+    window.__farmOffSeasonDefault = OFF_SEASON;
+    window.__setFarmSeason = (off, year) => { OFF_SEASON = !!off; if (year) SEASON_YEAR = year; };
 
     function renderOffSeason(){
       const set = (id, fn) => { const el = document.getElementById(id); if (el) fn(el); };
@@ -1077,6 +1081,9 @@
 
     function renderSeason(SEASON){
       if (OFF_SEASON) { renderOffSeason(); return; }
+      // Undo what the off-season box hides, in case the season was just switched back on.
+      { const t = document.getElementById('scheduleTitle'); if (t) t.textContent = SEASON_YEAR + ' Schedule';
+        const n = document.getElementById('scheduleNote'); if (n) n.style.display = ''; }
       const esc = s => String(s == null ? '' : s)
         .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
@@ -1162,6 +1169,7 @@
     // replace it a moment later; it must never be the only thing that renders.
     renderSeason(SEASON);
     window.__renderSeason = renderSeason;
+    window.__bakedSeason = SEASON;
   </script>
 
   <!-- ── LIVE AVAILABILITY ─────────────────────────────────────────────────────
@@ -1215,6 +1223,28 @@
       return out;
     }
 
+    // Applies a published schedule + season switch. Also called by the in-site editor right
+    // after a save, so the page updates without a reload. The season year is the year of the
+    // most recent dinner already held, or the year before the first upcoming one, so January's
+    // "season has ended" box still says the right year once next year's dates are entered.
+    window.__applyAvailability = (cur, seasonDoc) => {
+      const dates = (cur && cur.dates) || [];
+      const now = new Date();
+      const today = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+      const years = dates.map(x => +String(x.date || '').slice(0, 4)).filter(Boolean);
+      const past = dates.filter(x => String(x.date) < today).map(x => +String(x.date).slice(0, 4));
+      const off = (seasonDoc && typeof seasonDoc.offSeason === 'boolean') ? seasonDoc.offSeason : window.__farmOffSeasonDefault;
+      // In season the year must be the dates' own year: the schedule decides which dinners are
+      // past from it. Off season it is the season just finished, for the "has ended" box.
+      const year = !years.length ? 0
+        : !off ? Math.min(...years)
+        : (past.length ? Math.max(...past) : Math.min(...years) - 1);
+      window.__setFarmSeason(off, year);
+      const model = toModel(dates);
+      // A published-but-empty schedule must not wipe the dates off the page.
+      if (window.__renderSeason) window.__renderSeason(model.length ? model : (window.__bakedSeason || []));
+    };
+
     try {
       const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
       const fs = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
@@ -1237,12 +1267,12 @@
       // ---- Dinner dates -------------------------------------------------
       // availability/current is public-read by rule, so no sign-in is needed.
       try {
-        const snap = await fs.getDoc(fs.doc(db, 'availability', 'current'));
-        if (snap.exists()) {
-          const model = toModel((snap.data() || {}).dates || []);
-          // A published-but-empty doc must not wipe the schedule off the page.
-          if (model.length && window.__renderSeason) window.__renderSeason(model);
-        }
+        const [snap, ssnap] = await Promise.all([
+          fs.getDoc(fs.doc(db, 'availability', 'current')),
+          fs.getDoc(fs.doc(db, 'availability', 'season')).catch(() => null)
+        ]);
+        window.__applyAvailability(snap.exists() ? snap.data() : null,
+                                   ssnap && ssnap.exists() ? ssnap.data() : null);
       } catch (e) { /* keep the baked-in schedule */ }
 
       // ---- Farm stand status --------------------------------------------
@@ -1251,9 +1281,10 @@
       // has to remember to switch it back — which is the entire reason it exists.
       try {
         const fsnap = await fs.getDoc(fs.doc(db, 'farmstand', 'current'));
+        // Also called by the in-site editor right after a save.
+        window.__applyFarmstand = (d) => {
         const el = document.getElementById('farmstandStatus');
-        if (fsnap.exists() && el) {
-          const d = fsnap.data() || {};
+        if (d && el) {
           const esc = t => String(t == null ? '' : t)
             .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
           const now = new Date();
@@ -1284,6 +1315,8 @@
           el.className = 'farmstand-status ' + cls;
           el.innerHTML = html;
         }
+        };
+        if (fsnap.exists()) window.__applyFarmstand(fsnap.data() || {});
       } catch (e) { /* keep the cautious fallback line */ }
 
       // ---- Mailing list signup ------------------------------------------
