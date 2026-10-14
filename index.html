@@ -1056,18 +1056,20 @@
       const set = (id, fn) => { const el = document.getElementById(id); if (el) fn(el); };
       set('scheduleTitle', el => el.textContent = (SEASON_YEAR + 1) + ' Season');
       set('seasonBanner', el => el.innerHTML =
-        `<div class="season-banner"><strong>The ${SEASON_YEAR} season has ended.</strong> ` +
+        `<div class="season-banner" data-copy="season.off.banner"><strong>The ${SEASON_YEAR} season has ended.</strong> ` +
         `Thank you to everyone who joined us in the garden this year.</div>`);
       set('scheduleMonths', el => el.innerHTML =
-        `<p class="offseason-copy">Dates for ${SEASON_YEAR + 1} will be announced around New Year's. ` +
+        `<p class="offseason-copy" data-copy="season.off.p1">Dates for ${SEASON_YEAR + 1} will be announced around New Year's. ` +
         `Our mailing list hears first, and the dinners tend to sell out quickly, so that is the best way to get a seat.</p>` +
-        `<p class="offseason-copy">Stay tuned, and <a href="#signup" class="prose-link">sign up for the newsletter</a> ` +
+        `<p class="offseason-copy" data-copy="season.off.p2">Stay tuned, and <a href="#signup" class="prose-link">sign up for the newsletter</a> ` +
         `to get the dates as soon as they are set.</p>`);
       set('scheduleLegend', el => el.textContent = '');
       set('scheduleNote', el => el.style.display = 'none');
       set('dinnerCta', el => el.innerHTML =
-        `<a href="#signup" class="btn btn-primary">Join the Mailing List</a>`);
+        `<a href="#signup" class="btn btn-primary" data-copy="season.off.cta">Join the Mailing List</a>`);
       set('ctaCaution', el => el.textContent = '');
+      // Published copy wins even when the availability read lands after the copy read.
+      if (window.__siteCopy && window.__applyCopy) window.__applyCopy(window.__siteCopy);
     }
 
     function renderSeason(SEASON){
@@ -1150,6 +1152,7 @@
       if (cautionEl) cautionEl.textContent = open.length
         ? `Please check the schedule before purchasing — the payment form accepts any date, and bookings are final once payment is confirmed.`
         : `Please join the waitlist rather than purchasing — the payment form accepts any date, including sold-out ones, and bookings are final once payment is confirmed.`;
+      if (window.__siteCopy && window.__applyCopy) window.__applyCopy(window.__siteCopy);
     }
 
     // Paint the baked-in schedule immediately. The Firestore read below may
@@ -1395,6 +1398,9 @@
     });
     return n;
   }
+  // Exposed so a block the page draws itself (the farm's season box) can re-apply published copy
+  // after it re-renders.
+  window.__applyCopy = applyCopy;
   let loaded = null;
   const done = () => {
     window.__siteCopy = loaded;
