@@ -433,6 +433,9 @@
     .farmstand-status.is-open   { background: #e8efe2; border-color: #b9cba8; }
     .farmstand-status.is-closed { background: #efe9e2; border-color: #cfc2b2; }
     .farmstand-status strong { font-weight: 600; }
+    /* The status box is a <p>, so it inherited the section's pale text colour and the hours were
+       unreadable on the light box. Dark text here wins over `.farmstand p`. Fixed 2026-10-14. */
+    .farmstand .farmstand-status { color: var(--forest-dark); font-weight: 400; }
 
     /* ── NEWSLETTER ── */
     .signup { background: var(--forest); color: #f6f3ec; padding: 5rem 1.5rem; text-align: center; }

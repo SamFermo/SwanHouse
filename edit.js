@@ -111,14 +111,24 @@ const CSS = `
 .se-menu{position:absolute;z-index:100000;background:#fff;color:#222;border:1px solid #ccc;border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,.2);font:14px -apple-system,system-ui,sans-serif}
 .se-menu button{display:block;width:100%;text-align:left;background:none;border:0;padding:10px 14px;font:inherit;cursor:pointer}
 .se-menu button:hover{background:#f3eee8}
-.se-photos{position:fixed;left:0;right:0;bottom:62px;max-height:45vh;overflow:auto;background:#2a241f;color:#f4efe8;z-index:99998;padding:12px 16px;font:14px -apple-system,system-ui,sans-serif}
+.se-photos{position:fixed;left:0;right:0;bottom:var(--se-bar-h,62px);max-height:45vh;overflow:auto;background:#2a241f;color:#f4efe8;z-index:99998;padding:12px 16px;font:14px -apple-system,system-ui,sans-serif}
 .se-photos .se-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
 .se-photos figure{margin:0;position:relative}
 .se-photos img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;display:block}
 .se-photos figure.se-hidden img{opacity:.3}
 .se-photos figcaption{margin-top:4px}
 .se-photos figcaption button{font:inherit;background:none;border:1px solid #f4efe8;color:#f4efe8;border-radius:4px;padding:3px 8px;cursor:pointer}
-body.se-on{padding-bottom:70px}
+body.se-on{padding-bottom:var(--se-bar-h,70px)}
+@media (max-width:560px){
+  .se-bar{gap:6px;padding:8px 10px;font-size:14px}
+  .se-bar>b{display:none}
+  .se-bar .se-sp{display:none}
+  .se-bar .se-status{flex-basis:100%;font-size:13px;opacity:.85}
+  .se-btn{padding:8px 10px;flex:1 1 auto}
+  .se-undo .se-long{display:none}
+}
+.se-undo .se-short{display:none}
+@media (max-width:560px){ .se-undo .se-short{display:inline} }
 /* FAQ: every answer fully open while editing, no clipping, no accordion toggling */
 .se-on .faq-answer{max-height:none !important;overflow:visible !important;padding-top:1rem !important;transition:none !important}
 .se-on .faq-question::after{display:none}
@@ -240,13 +250,16 @@ async function enterEditMode() {
   }, true);
   const bar = el('div', { className: 'se-bar' });
   bar.innerHTML = `<b>Editing ${window.SITE_NAME}</b><span class="se-status">0 blocks changed</span><span class="se-sp"></span>
-    <button class="se-btn se-photos-btn">Photos</button><button class="se-btn se-undo">Undo last publish</button>
+    <button class="se-btn se-photos-btn">Photos</button><button class="se-btn se-undo"><span class="se-long">Undo last publish</span><span class="se-short">Undo</span></button>
     <button class="se-btn se-pri se-publish" disabled>Publish</button><button class="se-btn se-done">Done</button>`;
   document.body.appendChild(bar);
   bar.querySelector('.se-publish').onclick = publish;
   bar.querySelector('.se-undo').onclick = undo;
   bar.querySelector('.se-done').onclick = () => { if (dirtyCount() && !confirm('You have unpublished changes. Leave anyway?')) return; location.href = location.pathname; };
   bar.querySelector('.se-photos-btn').onclick = togglePhotos;
+  // Leave exactly enough room under the page for the bar, whatever it wraps to on a phone.
+  const fit = () => document.documentElement.style.setProperty('--se-bar-h', (bar.offsetHeight + 8) + 'px');
+  fit(); window.addEventListener('resize', fit);
   refresh();
 }
 function onPaste(ev) { ev.preventDefault(); const t = (ev.clipboardData || window.clipboardData).getData('text/plain'); document.execCommand('insertText', false, t); }
