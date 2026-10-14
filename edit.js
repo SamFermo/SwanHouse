@@ -72,8 +72,20 @@ function sig(obj) {
     return Array.from(out).every(Boolean) ? out : null;  // Array.from: holes are not skipped
   }
 
-export { sanitize, snapshot, diffKeys, sig, assignSlots };
-if (typeof window !== 'undefined') window.SiteEdit = { sanitize, snapshot, diffKeys, sig, assignSlots };
+// Apply ONLY this editor's changes (keys that differ from what the page showed at load,
+// hide toggles relative to load) onto the LIVE doc, so a concurrent publish by someone else
+// survives. Review C1, 2026-10-14.
+function mergePublish(live, baseline, now, baseHidden, hidden) {
+  const blocks = Object.assign({}, (live && live.blocks) || {});
+  diffKeys(baseline, now).forEach((k) => { blocks[k] = now[k]; });
+  const set = new Set((live && live.hiddenPhotos) || []);
+  hidden.filter((x) => !baseHidden.includes(x)).forEach((x) => set.add(x));
+  baseHidden.filter((x) => !hidden.includes(x)).forEach((x) => set.delete(x));
+  return { blocks, hiddenPhotos: [...set] };
+}
+
+export { sanitize, snapshot, diffKeys, sig, assignSlots, mergePublish };
+if (typeof window !== 'undefined') window.SiteEdit = { sanitize, snapshot, diffKeys, sig, assignSlots, mergePublish };
 
 // ── UI ───────────────────────────────────────────────────────────────────────
 const CSS = `
@@ -111,7 +123,7 @@ body.se-on{padding-bottom:70px}
 const state = { app: null, db: null, auth: null, fs: null, user: null, baseline: null, baseHidden: [], hidden: [], current: null, manifest: [], on: false };
 
 function el(tag, attrs, html) { const e = document.createElement(tag); Object.assign(e, attrs || {}); if (html != null) e.innerHTML = html; return e; }
-function toast(msg, isErr) { const t = el('div', { className: 'se-toast' + (isErr ? ' se-err' : '') }, msg); document.body.appendChild(t); setTimeout(() => t.remove(), isErr ? 7000 : 2600); }
+function toast(msg, isErr) { const t = el('div', { className: 'se-toast' + (isErr ? ' se-err' : ''), textContent: msg }); document.body.appendChild(t); setTimeout(() => t.remove(), isErr ? 7000 : 2600); }
 function fail(msg) { console.log('siteedit: ' + msg); toast(msg, true); }
 function stripAuthParams() { const u = new URL(location.href); if (u.searchParams.has('oobCode')) history.replaceState(null, '', u.pathname + '?edit'); }
 
@@ -121,7 +133,7 @@ async function boot() {
     new Promise((res) => document.addEventListener('sitecopy:loaded', () => res(), { once: true }));
   await whenLoaded;
   state.app = window.__siteCopyApp;
-  if (!state.app) { fail('The site could not reach its publishing service. Try again in a minute.'); return; }
+  if (!state.app || window.__siteCopyError) { fail('The site could not reach its publishing service just now, so editing is off to keep from overwriting anything. Reload in a minute.'); return; }
   state.fs = await import(FB + 'firebase-firestore.js');
   const A = await import(FB + 'firebase-auth.js');
   state.A = A;
@@ -132,7 +144,7 @@ async function boot() {
 
   if (A.isSignInWithEmailLink(state.auth, location.href)) {
     const email = localStorage.getItem('siteEditEmail');
-    if (!email) return signInCard('Open this link in the browser you asked from, or enter your email here to resend.');
+    if (!email) return finishCard();
     try { await A.signInWithEmailLink(state.auth, email, location.href); stripAuthParams(); }
     catch (e) {
       if (e.code === 'auth/invalid-action-code' && state.auth.currentUser) stripAuthParams();
@@ -140,6 +152,25 @@ async function boot() {
     }
   }
   A.onAuthStateChanged(state.auth, (u) => { state.user = u; if (u && !u.isAnonymous) enterEditMode(); else if (!state.on) signInCard(); });
+}
+
+// The link was opened somewhere that didn't ask for it (e.g. the Gmail app's own browser).
+// Firebase's standard flow: confirm the address and finish signing in right here.
+function finishCard() {
+  if (document.querySelector('.se-card')) return;
+  const wrap = el('div', { className: 'se-card' });
+  wrap.innerHTML = `<div><h3>Finish signing in</h3>
+    <p>Type the email address the link was sent to.</p>
+    <input type="email" placeholder="you@example.com" autocomplete="email">
+    <div style="display:flex;gap:8px;justify-content:flex-end"><button class="se-btn se-cancel">Cancel</button><button class="se-btn se-pri se-finish">Sign in</button></div>
+    <p class="se-msg" style="margin:12px 0 0;font-size:14px;color:#555"></p></div>`;
+  document.body.appendChild(wrap);
+  wrap.querySelector('.se-cancel').onclick = () => { wrap.remove(); history.replaceState(null, '', location.pathname); };
+  wrap.querySelector('.se-finish').onclick = async () => {
+    const email = wrap.querySelector('input').value.trim().toLowerCase(); const msg = wrap.querySelector('.se-msg');
+    try { await state.A.signInWithEmailLink(state.auth, email, location.href); localStorage.setItem('siteEditEmail', email); stripAuthParams(); wrap.remove(); }
+    catch (e) { msg.textContent = (e.code === 'auth/invalid-email') ? 'That is not the address the link was sent to.' : 'That link has expired or was already used. Cancel and ask for a new one.'; }
+  };
 }
 
 function signInCard(note) {
@@ -164,7 +195,10 @@ function signInCard(note) {
   };
 }
 
-function enterEditMode() {
+async function enterEditMode() {
+  if (state.on) return;
+  try { await state.fs.getDoc(state.fs.doc(state.db, 'site-copy-history', window.SITE + '-access-check')); }
+  catch (e) { if (e.code === 'permission-denied') { fail("You're signed in, but this address isn't on the editor list. Ask Sam to add it."); return; } }
   if (state.on) return; state.on = true;
   document.querySelector('.se-card')?.remove();
   document.body.classList.add('se-on');
@@ -176,7 +210,9 @@ function enterEditMode() {
     e.addEventListener('input', refresh);
     e.addEventListener('paste', onPaste);
     e.addEventListener('contextmenu', (ev) => { ev.preventDefault(); blockMenu(e, ev.clientX, ev.clientY); });
-    e.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' && e.tagName !== 'DIV' && e.tagName !== 'P') ev.preventDefault(); });
+    // Enter inserts a <br> everywhere. Browsers otherwise wrap the new line in a <div>, which
+    // sanitize() unwraps, gluing the two sentences together on the live site (review I3).
+    e.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); document.execCommand('insertLineBreak'); } });
     let t; e.addEventListener('touchstart', () => { t = setTimeout(() => { const r = e.getBoundingClientRect(); blockMenu(e, r.left + 10, r.top + 10); }, 600); }, { passive: true });
     e.addEventListener('touchend', () => clearTimeout(t)); e.addEventListener('touchmove', () => clearTimeout(t));
   });
@@ -220,27 +256,40 @@ document.querySelectorAll('[data-copy]').forEach((e) => {
   ORIGINAL[k] = (window.__siteCopyBaked && k in window.__siteCopyBaked) ? window.__siteCopyBaked[k] : e.innerHTML;
 });
 
-async function writeDoc(blocks, hidden) {
-  const { doc, setDoc } = state.fs;
-  const prev = state.current;
-  let prevAt = null;
-  if (prev && prev.publishedAt) {
-    await setDoc(doc(state.db, 'site-copy-history', window.SITE + '-' + prev.publishedAt), prev);
-    prevAt = prev.publishedAt;
-  }
-  // prevAt points at the history doc this publish replaced, so Undo needs no query or index.
-  const next = { blocks, hiddenPhotos: hidden, publishedAt: Date.now(), publishedBy: state.user.uid, prevAt, schema: 1 };
-  await setDoc(doc(state.db, 'site-copy', window.SITE), next);
-  state.current = next; window.__siteCopy = next;
+// Publish and Undo both run in a transaction against the LIVE doc: read it, archive it to
+// history, write the new version on top. Nothing someone else published in the meantime is
+// lost or left out of history (review C1).
+async function commit(build) {
+  const { doc, runTransaction } = state.fs;
+  const ref = doc(state.db, 'site-copy', window.SITE);
+  let next = null;
+  await runTransaction(state.db, async (tx) => {
+    const snap = await tx.get(ref);
+    const live = snap.exists() ? snap.data() : null;
+    const body = await build(live, tx);
+    if (!body) return;
+    if (live && live.publishedAt) tx.set(doc(state.db, 'site-copy-history', window.SITE + '-' + live.publishedAt), live);
+    next = { blocks: body.blocks, hiddenPhotos: body.hiddenPhotos, publishedAt: Date.now(), publishedBy: state.user.uid,
+             prevAt: live && live.publishedAt ? live.publishedAt : null, schema: 1 };
+    tx.set(ref, next);
+  });
+  if (next) { state.current = next; window.__siteCopy = next; }
+  return next;
+}
+function showDoc(d) {
+  document.querySelectorAll('[data-copy]').forEach((e) => {
+    const k = e.getAttribute('data-copy'); const v = d && d.blocks && d.blocks[k] ? sanitize(d.blocks[k]) : '';
+    e.innerHTML = v || ORIGINAL[k];
+  });
+  state.hidden = ((d && d.hiddenPhotos) || []).slice(); state.baseHidden = state.hidden.slice();
+  state.baseline = snapshot(); refresh();
 }
 async function publish() {
   const btn = document.querySelector('.se-publish'); btn.disabled = true; btn.textContent = 'Publishing…';
   try {
-    const now = snapshot();
-    const blocks = Object.assign({}, (state.current && state.current.blocks) || {});
-    diffKeys(state.baseline, now).forEach((k) => { blocks[k] = now[k]; });
-    await writeDoc(blocks, state.hidden.slice());
-    state.baseline = now; state.baseHidden = state.hidden.slice();
+    const now = snapshot(); const hidden = state.hidden.slice();
+    const next = await commit(async (live) => mergePublish(live, state.baseline, now, state.baseHidden, hidden));
+    showDoc(next);   // the page now shows exactly what guests get, including anyone else's changes
     toast('Published. Guests see it on their next visit.');
   } catch (e) {
     fail(e.code === 'permission-denied' ? "This address isn't on the editor list." : 'Publish failed: ' + (e.code || e.message));
@@ -248,18 +297,19 @@ async function publish() {
   btn.textContent = 'Publish'; refresh();
 }
 async function undo() {
-  const { doc, getDoc } = state.fs;
+  const { doc } = state.fs;
   try {
-    const cur = state.current;
-    if (!cur || !cur.prevAt) { toast('Nothing to undo yet.'); return; }
-    const snap = await getDoc(doc(state.db, 'site-copy-history', window.SITE + '-' + cur.prevAt));
-    if (!snap.exists()) { toast('The previous version is no longer available.'); return; }
-    const prev = snap.data();
-    if (!confirm('Put back the previous published version?')) return;
-    await writeDoc(prev.blocks || {}, prev.hiddenPhotos || []);
-    document.querySelectorAll('[data-copy]').forEach((e) => { const k = e.getAttribute('data-copy'); e.innerHTML = (prev.blocks && prev.blocks[k]) ? sanitize(prev.blocks[k]) : ORIGINAL[k]; });
-    state.hidden = (prev.hiddenPhotos || []).slice(); state.baseHidden = state.hidden.slice();
-    state.baseline = snapshot(); refresh(); toast('Previous version restored and published.');
+    if (!confirm('Put back the version from before the last publish?')) return;
+    let restored = false;
+    const next = await commit(async (live, tx) => {
+      if (!live || !live.prevAt) return null;
+      const snap = await tx.get(doc(state.db, 'site-copy-history', window.SITE + '-' + live.prevAt));
+      if (!snap.exists()) return null;
+      restored = true; const prev = snap.data();
+      return { blocks: prev.blocks || {}, hiddenPhotos: prev.hiddenPhotos || [] };
+    });
+    if (!restored) { toast('Nothing to undo yet.'); return; }
+    showDoc(next); toast('Previous version restored and published.');
   } catch (e) { fail('Undo failed: ' + (e.code || e.message)); }
 }
 

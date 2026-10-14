@@ -1417,6 +1417,7 @@
       console.log('sitecopy: none');
     }
   } catch (e) {
+    window.__siteCopyError = true;   // edit mode refuses to open; pool loader keeps baked photos
     console.log('sitecopy: error ' + (e && (e.code || e.message)));
   }
   done();
@@ -1450,6 +1451,7 @@
   }
   document.addEventListener('sitecopy:loaded', async (ev) => {
     try {
+      if (window.__siteCopyError) return;   // can't know what's hidden, so don't rotate (review I4)
       const items = Array.from(document.querySelectorAll('[data-pool-slot]'));
       if (!items.length) return;
       const res = await fetch('images/pool/manifest.json', { cache: 'no-cache' });
