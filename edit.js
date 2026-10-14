@@ -29,7 +29,10 @@ const FB = 'https://www.gstatic.com/firebasejs/10.12.2/';
         walk(child);
         if (!ALLOWED[name]) { child.replaceWith(...Array.from(child.childNodes)); continue; }
         for (const attr of Array.from(child.attributes)) {
-          if (name === 'A' && attr.name === 'href' && /^(https?:|mailto:|tel:|#|\/)/i.test(attr.value.trim())) continue;
+          const v = attr.value.trim();
+          if (name === 'A' && attr.name === 'href' && /^(https?:|mailto:|tel:|#|\/|[^:]*$)/i.test(v)) continue;
+          if (name === 'A' && attr.name === 'target' && v === '_blank') continue;
+          if (name === 'A' && attr.name === 'class' && /^[a-z][a-z0-9-]*( [a-z][a-z0-9-]*)*$/.test(v)) continue;
           child.removeAttribute(attr.name);
         }
         if (name === 'A' && !child.getAttribute('href')) child.replaceWith(...Array.from(child.childNodes));
@@ -116,6 +119,12 @@ const CSS = `
 .se-photos figcaption{margin-top:4px}
 .se-photos figcaption button{font:inherit;background:none;border:1px solid #f4efe8;color:#f4efe8;border-radius:4px;padding:3px 8px;cursor:pointer}
 body.se-on{padding-bottom:70px}
+/* FAQ: every answer fully open while editing, no clipping, no accordion toggling */
+.se-on .faq-answer{max-height:none !important;overflow:visible !important;padding-top:1rem !important;transition:none !important}
+.se-on .faq-question::after{display:none}
+.se-on .faq-item{margin-bottom:1.25rem}
+/* links and buttons read as text while editing */
+.se-on a[data-copy],.se-on [data-copy] a,.se-on button[data-copy]{cursor:text}
 .se-toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#2d6a4f;color:#fff;padding:10px 16px;border-radius:8px;z-index:100001;font:15px -apple-system,system-ui,sans-serif;max-width:90vw}
 .se-toast.se-err{background:#a8311e}
 `;
@@ -216,6 +225,19 @@ async function enterEditMode() {
     let t; e.addEventListener('touchstart', () => { t = setTimeout(() => { const r = e.getBoundingClientRect(); blockMenu(e, r.left + 10, r.top + 10); }, 600); }, { passive: true });
     e.addEventListener('touchend', () => clearTimeout(t)); e.addEventListener('touchmove', () => clearTimeout(t));
   });
+  // While editing, a click on an editable link or button places the cursor instead of
+  // navigating, opening the FAQ accordion, or submitting anything.
+  document.addEventListener('click', (ev) => {
+    if (!state.on) return;
+    const t = ev.target.closest && ev.target.closest('a, button');
+    if (t && (t.hasAttribute('data-copy') || t.closest('[data-copy]'))) { ev.preventDefault(); ev.stopPropagation(); }
+  }, true);
+  // Space inside a contentEditable <button> would "press" it in some browsers; type it instead.
+  document.addEventListener('keydown', (ev) => {
+    if (state.on && ev.key === ' ' && ev.target.tagName === 'BUTTON' && ev.target.hasAttribute('data-copy')) {
+      ev.preventDefault(); document.execCommand('insertText', false, ' ');
+    }
+  }, true);
   const bar = el('div', { className: 'se-bar' });
   bar.innerHTML = `<b>Editing ${window.SITE_NAME}</b><span class="se-status">0 blocks changed</span><span class="se-sp"></span>
     <button class="se-btn se-photos-btn">Photos</button><button class="se-btn se-undo">Undo last publish</button>
