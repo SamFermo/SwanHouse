@@ -88,8 +88,9 @@ function mergePublish(live, baseline, now, baseHidden, hidden) {
 }
 
 // ── Farm schedule + stand (Swan House only) ───────────────────────────────────
-// These write the SAME records, in the SAME shape, as the farm portal's Dinner Dates and
-// Farm Stand screens, so either tool can be used and the last save wins. Added 2026-10-14.
+// These write availability/current, availability/season and farmstand/current. Added
+// 2026-10-14. Same day, the farm portal's own Dinner Dates and Farm Stand screens were
+// removed and the rules narrowed to siteEditor(), so this is the ONLY place they are set.
 // FOLLOW-UP (Sam, 2026-10-14): once farm dinner tickets sell through OpenTable, sold-out
 // dates should update themselves from OpenTable instead of being set by hand here.
 const ISO = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
@@ -411,7 +412,7 @@ async function datesPanel(p) {
   const rows = cur.exists() ? ((cur.data() || {}).dates || []) : [];
   const off = sea.exists() ? !!(sea.data() || {}).offSeason : (window.__farmOffSeasonDefault !== false);
   p.innerHTML = `<h3>Dinner dates</h3>
-    <p class="se-hint">Saves straight to the website (and the farm portal sees the same list). Sold-out dates show crossed out; open dates show the ticket button.</p>
+    <p class="se-hint">Saves straight to the website. Sold-out dates show crossed out; open dates show the ticket button.</p>
     <div class="se-switch"><label><input type="radio" name="se-season" value="on" ${off ? '' : 'checked'}> Season is on: show the dates</label>
       <label><input type="radio" name="se-season" value="off" ${off ? 'checked' : ''}> Off season: show the "season has ended" box</label></div>
     <div class="se-rows"></div>
@@ -451,7 +452,7 @@ async function standPanel(p) {
   const snap = await getDoc(doc(state.db, 'farmstand', 'current'));
   const d = Object.assign({ season: 'open', days: 'Wednesday–Sunday', hours: '12–5pm', note: '', closedUntil: '', closureNote: '' }, snap.exists() ? snap.data() : {});
   p.innerHTML = `<h3>Farm stand</h3>
-    <p class="se-hint">Saves straight to the website (and the farm portal sees the same setting).</p>
+    <p class="se-hint">Saves straight to the website.</p>
     <div class="se-switch"><label><input type="radio" name="se-fs" value="open" ${d.season === 'closed' ? '' : 'checked'}> Open this season</label>
       <label><input type="radio" name="se-fs" value="closed" ${d.season === 'closed' ? 'checked' : ''}> Closed for the season</label></div>
     <label>Days open</label><input data-k="days" value="${esc(d.days)}" style="width:100%">
