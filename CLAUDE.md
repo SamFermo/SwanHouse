@@ -106,3 +106,5 @@ anything special for that, but do not rewrite history (no force-push, no rebasin
 
 Words (edit mode on the live site), gallery photos (the shared Google Drive folder),
 dinner dates and sold-out status, farm stand hours (edit screen buttons) and anything about who can edit. Those all live outside this repo.
+
+<!-- guard test 2026-10-14: simulated GitHub-side edit -->
