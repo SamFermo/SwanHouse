@@ -1,0 +1,3 @@
+# Keep the editing rules for Claude out of the public site.
+exclude:
+  - CLAUDE.md

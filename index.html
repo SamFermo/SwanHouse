@@ -871,8 +871,8 @@
     <span class="section-label" data-copy="stand.label">Farm Stand</span>
     <h2 data-copy="stand.h2">From the farm and the restaurant</h2>
     <p data-copy="stand.p1">Our seasonal farm store stocks products made at San Fermo with farm ingredients, plus fresh produce and goods straight from the property.</p>
-    <!-- Farm stand status is published from the SHF Portal (Farm Stand screen) into
-         Firestore farmstand/current. The text below is the offline fallback and is
+    <!-- Farm stand status is set from this site's edit screen (Farm Stand button) into
+         Firestore farmstand/current (SHF Portal screen retired 2026-10-14). The text below is the offline fallback and is
          deliberately vague about hours, because stale specific hours are worse than
          none — a guest who drives out to a closed stand had better not have read a
          precise time here. Added 2026-08-05. -->
@@ -1046,15 +1046,16 @@
 
     /* Rewritten 2026-08-03: renderSeason now takes a model instead of closing over
        SEASON, so the same code paints the baked-in fallback and, a moment later,
-       whatever the SHF Portal has published. Exposed on window for the module
+       whatever has been published to availability/current (since 2026-10-14 only from
+       this site's edit screen, Dinner Dates button). Exposed on window for the module
        block at the end of the file. */
     /* OFF-SEASON SWITCH, added 2026-09-19. While true, the schedule card shows the
        "season has ended" note instead of dates, and the button points at the mailing
-       list. It also overrides whatever the portal publishes, so old dates cannot
-       come back. When next year's dates are ready: set this to false, then update
-       SEASON_YEAR and SEASON above (or publish the dates from the portal). */
-    // Baked default. The live value comes from availability/season, which the editor's
-    // Dinner Dates panel sets (separate record so a farm-portal save can't wipe it).
+       list. This constant is only the baked default for a visitor whose Firestore read
+       fails. Since 2026-10-14 the live on/off value AND the dates are set from this
+       site's edit screen (Dinner Dates button), stored in availability/season and
+       availability/current. Do not hand-edit SEASON / OFF_SEASON to change what the
+       public sees; it will be overridden on load. */
     let OFF_SEASON = true;
     window.__farmOffSeasonDefault = OFF_SEASON;
     window.__setFarmSeason = (off, year) => { OFF_SEASON = !!off; if (year) SEASON_YEAR = year; };
@@ -1150,7 +1151,7 @@
       // with no dinner — and bookings are final once payment clears. With zero open
       // dates the button has no legitimate use and can only take money for a seat
       // that does not exist. It reappears on its own the moment a date is marked
-      // open in the portal. Sam's call 2026-08-03, the day the 2026 season sold out.
+      // open (Dinner Dates on the edit screen). Sam's call 2026-08-03, the day the 2026 season sold out.
       const ctaEl = document.getElementById('dinnerCta');
       if (ctaEl) ctaEl.innerHTML =
         `<a href="${WAITLIST_URL}" class="btn btn-primary">Join the Waitlist</a>` +
