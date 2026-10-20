@@ -8,7 +8,17 @@
   <meta property="og:title" content="Swan House Farm | La Conner, Washington">
   <meta property="og:description" content="A family farm on the Skagit River. Farm dinners, picnics, and a seasonal farm stand.">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://www.swanhousefarm.com">
+  <meta property="og:url" content="https://www.swanhousefarm.com/">
+  <link rel="canonical" href="https://www.swanhousefarm.com/">
+  <meta property="og:image" content="https://www.swanhousefarm.com/images/dinner-hero-1920.jpg">
+  <meta property="og:site_name" content="Swan House Farm">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32.png">
+  <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+  <script type="application/ld+json">
+  {"@context": "https://schema.org", "@type": "LocalBusiness", "name": "Swan House Farm", "url": "https://www.swanhousefarm.com/", "image": "https://www.swanhousefarm.com/images/dinner-hero-1920.jpg", "email": "info@sanfermoseattle.com", "description": "A family farm on the Skagit River: farm dinners, a seasonal farm stand, and picnics.", "address": {"@type": "PostalAddress", "streetAddress": "19479 Landing Rd.", "addressLocality": "Mount Vernon", "addressRegion": "WA", "postalCode": "98273", "addressCountry": "US"}, "sameAs": ["https://www.instagram.com/swanhousefarm/"]}
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
@@ -277,7 +287,7 @@
     .btn-demoted:hover { border-color: var(--charcoal); color: var(--charcoal); }
     .cta-caution {
       font-family: var(--font-sans); font-size: 0.75rem; font-style: italic;
-      color: var(--warm-gray-light); margin-top: 0.5rem; max-width: 34rem;
+      color: var(--warm-gray); margin-top: 0.5rem; max-width: 34rem; /* contrast fix 2026-10-20 */
     }
 
     /* ── DINNER GALLERY ── */
@@ -660,13 +670,12 @@
           <p class="cta-caution" id="ctaCaution"></p>
         </div>
         <div class="dinners-schedule fade-in">
-          <h3 id="scheduleTitle">2026 Schedule</h3>
+          <h3 id="scheduleTitle">Schedule</h3>
           <div id="seasonBanner"></div>
           <div id="scheduleMonths"></div>
           <p class="schedule-legend" id="scheduleLegend"></p>
           <div class="schedule-note" id="scheduleNote">
             <p data-copy="dinners.note1"><strong>Tickets:</strong> $450 per ticket, admits two guests. Includes reception, 5-course paired wine dinner, tax, and service.</p>
-            <p data-copy="dinners.note2"><strong>Giving back:</strong> $50 from each ticket in 2026 goes to farmers impacted by the 2025 flood.</p>
             <p style="margin-top: 0.75rem; font-style: italic; font-size: 0.8rem;" data-copy="dinners.note3">Events often sell out before menus are published. <a href="mailto:info@sanfermoseattle.com?subject=SHF%20Farm%20Dinner%20Waitlist" class="prose-link">Email to join the waitlist</a> for sold-out dates.</p>
           </div>
         </div>
@@ -951,7 +960,7 @@
     <h3 data-copy="news.h3">Join the mailing list</h3>
     <p data-copy="news.p1">Farm dinner dates, openings when a seat comes back, and first word on next season's tickets. A few emails a year, nothing more.</p>
     <form class="signup-form" id="signupForm" novalidate>
-      <input type="email" id="signupEmail" placeholder="Your email address" autocomplete="email" required>
+      <input type="email" id="signupEmail" placeholder="Your email address" aria-label="Email address" autocomplete="email" required>
       <button type="submit" id="signupBtn">Join</button>
     </form>
     <div class="signup-msg" id="signupMsg" role="status" aria-live="polite"></div>
@@ -978,7 +987,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <span id="siteEditEntry">&copy; 2026 Swan House Farm</span>
+      <span id="siteEditEntry">&copy; <span id="copyYear">2026</span> Swan House Farm</span>
       <div class="footer-social">
         <a href="https://www.instagram.com/swanhousefarm/" target="_blank" data-copy="foot.instagram2">Instagram</a>
       </div>
@@ -986,6 +995,9 @@
   </footer>
 
   <script>
+    // Copyright year keeps itself current (2026-10-20). The span sits INSIDE #siteEditEntry,
+    // so the five-tap edit entry still counts taps on the whole line.
+    (function(){ var y = document.getElementById('copyYear'); if (y) y.textContent = new Date().getFullYear(); })();
     // Scroll nav
     const nav = document.getElementById('navbar');
     window.addEventListener('scroll', () => {
@@ -1246,6 +1258,54 @@
       if (window.__renderSeason) window.__renderSeason(model.length ? model : (window.__bakedSeason || []));
     };
 
+    // ---- Mailing list signup (rewired 2026-10-20) ---------------------------
+    // The submit listener is attached right away, before any network work, so a visitor
+    // can never submit into a plain page reload. It waits for Firebase; if Firebase never
+    // comes up (blocked scripts, App Check trouble, offline) the visitor is told to email
+    // instead, the same way the San Fermo form already behaves. subscribers/ is
+    // create-only for the browser, so the page can never read the list back.
+    let sigResolve, sigReject;
+    const sigReady = new Promise((res, rej) => { sigResolve = res; sigReject = rej; });
+    sigReady.catch(() => {});
+    setTimeout(() => sigReject(new Error('signup init timed out')), 15000);
+    (function wireSignup() {
+      const form = document.getElementById('signupForm');
+      if (!form) return;
+      const fallback = 'Sorry — that did not save. Please email ' +
+        '<a href="mailto:info@sanfermoseattle.com?subject=SHF%20Mailing%20List" ' +
+        'style="color:inherit;text-decoration:underline">info@sanfermoseattle.com</a> ' +
+        'and we will add you by hand.';
+      form.addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const input = document.getElementById('signupEmail');
+        const btn = document.getElementById('signupBtn');
+        const msg = document.getElementById('signupMsg');
+        const email = (input.value || '').trim().toLowerCase();
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(email)) {
+          msg.textContent = 'That address does not look right — mind checking it?';
+          return;
+        }
+        btn.disabled = true; msg.textContent = 'One moment…';
+        try {
+          const { app, fs, db, auth } = await sigReady;
+          const a = auth.getAuth(app);
+          if (!a.currentUser) await auth.signInAnonymously(a);
+          await fs.addDoc(fs.collection(db, 'subscribers'), {
+            email: email,
+            source: 'swanhousefarm.com',
+            createdAt: new Date().toISOString()
+          });
+          form.style.display = 'none';
+          msg.textContent = "You're on the list. We'll be in touch.";
+        } catch (e) {
+          // Never claim success we did not get.
+          btn.disabled = false;
+          msg.innerHTML = fallback;
+          console.error('signup failed:', e);
+        }
+      });
+    })();
+
     try {
       const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
       const fs = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
@@ -1264,6 +1324,11 @@
       } catch (e) { /* non-blocking; the read below may still work unenforced */ }
 
       const db = fs.getFirestore(app);
+      // Signup is ready as soon as Firestore and Auth are; it doesn't wait on the reads below.
+      try {
+        const auth = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
+        sigResolve({ app, fs, db, auth });
+      } catch (e) { sigReject(e); }
 
       // ---- Dinner dates -------------------------------------------------
       // availability/current is public-read by rule, so no sign-in is needed.
@@ -1320,46 +1385,8 @@
         if (fsnap.exists()) window.__applyFarmstand(fsnap.data() || {});
       } catch (e) { /* keep the cautious fallback line */ }
 
-      // ---- Mailing list signup ------------------------------------------
-      // subscribers/ is create-only for the browser: it can add an address and can
-      // do nothing else, so a public page can never be used to read the list back.
-      const form = document.getElementById('signupForm');
-      if (form) {
-        const auth = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
-        form.addEventListener('submit', async (ev) => {
-          ev.preventDefault();
-          const input = document.getElementById('signupEmail');
-          const btn = document.getElementById('signupBtn');
-          const msg = document.getElementById('signupMsg');
-          const email = (input.value || '').trim().toLowerCase();
-          if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(email)) {
-            msg.textContent = 'That address does not look right — mind checking it?';
-            return;
-          }
-          btn.disabled = true; msg.textContent = 'One moment…';
-          try {
-            const a = auth.getAuth(app);
-            if (!a.currentUser) await auth.signInAnonymously(a);
-            await fs.addDoc(fs.collection(db, 'subscribers'), {
-              email: email,
-              source: 'swanhousefarm.com',
-              createdAt: new Date().toISOString()
-            });
-            form.style.display = 'none';
-            msg.textContent = "You're on the list. We'll be in touch.";
-          } catch (e) {
-            btn.disabled = false;
-            // Never claim success we did not get. The old rebuilt form said "Thanks!"
-            // and threw the address away; that is the failure being fixed here.
-            msg.innerHTML = 'Sorry — that did not save. Please email ' +
-              '<a href="mailto:info@sanfermoseattle.com?subject=SHF%20Mailing%20List" ' +
-              'style="color:inherit;text-decoration:underline">info@sanfermoseattle.com</a> ' +
-              'and we will add you by hand.';
-            console.error('signup failed:', e);
-          }
-        });
-      }
     } catch (e) {
+      sigReject(e);
       /* keep the baked-in schedule and the fallback farm stand line */
     }
   })();
