@@ -4,9 +4,9 @@ This repo is the public website for Swan House Farm, served by GitHub Pages at
 https://samfermo.github.io/SwanHouse/ . Anything committed to `main` is live for every
 visitor within a minute or two. Read this whole file before changing anything.
 
-Written 2026-10-14 for Kelly (and her Claude), who may change how the site LOOKS:
-layout, spacing, fonts, colors, sizes, section order, how things sit on a phone. Sam
-West owns the site. When in doubt, stop and ask Kelly to check with Sam.
+Written 2026-10-14 for any Claude changing how the site LOOKS: layout, spacing, fonts,
+colors, sizes, section order, how things sit on a phone. Sam West owns the site and makes
+all design changes (since 2026-10-20). When in doubt, stop and ask Sam.
 
 ## The one thing to understand first
 
@@ -19,7 +19,7 @@ So:
 
 - **Do not change wording by editing the HTML.** If the text you change has been
   published from the edit screen, the site keeps showing the published version and your
-  change looks like it failed. If Kelly wants different words, she changes them on the
+  change looks like it failed. If someone wants different words, they change them on the
   live site in edit mode (instructions are in Sam's handoff doc). Your job is the look.
 - **Every element with a `data-copy="..."` attribute is an editable text block.** You
   may restyle it, move it, change its tag or classes, or wrap it in new containers. You
@@ -29,7 +29,7 @@ So:
 - Inside a `data-copy` element, only plain text plus `b`, `i`, `em`, `strong`, `br` and
   `a` survive. Do not put other markup (spans with classes, icons, nested divs) inside
   one; it will be stripped when someone edits it. Put decoration outside the element.
-- Deleting an element that has `data-copy` is allowed if Kelly wants that text gone,
+- Deleting an element that has `data-copy` is allowed if Sam wants that text gone,
   but say so in the commit message. Adding a NEW text element is fine: give it a new,
   unique, lowercase dotted key (e.g. `data-copy="story.p4"`) so it becomes editable too.
   Check the key is not already used anywhere in the file.
@@ -91,16 +91,16 @@ keep the element, its id or attribute, and its role:
 2. Check it at phone width (about 390px wide) as well as desktop. Most visitors are on
    phones. No sideways scrolling, nothing overlapping, buttons big enough to tap.
 3. Commit to `main` with a plain message saying what changed and why
-   ("Bigger section headings on phones, per Kelly"). One commit per change.
+   ("Bigger section headings on phones"). One commit per change.
 4. After a minute or two, open the live site (add `?v=` and any number to the address to
    skip the cache) and confirm it looks right, on a phone too. Confirm the dotted
-   outlines still appear in edit mode if Kelly can check that.
+   outlines still appear in edit mode.
 5. If something went wrong, revert that commit (`git revert`) rather than patching on top
-   of it in a hurry, and tell Kelly what happened.
+   of it in a hurry, and tell Sam what happened.
 
-Sam also pushes to this repo from his own setup. His tool checks for changes made here
-first and pulls them in, so your work will not be overwritten. You do not need to do
-anything special for that, but do not rewrite history (no force-push, no rebasing `main`).
+Sam's own push tool (in his Starfleet workspace) checks for changes made directly on
+GitHub first and pulls them in rather than overwriting them. Do not rewrite history
+(no force-push, no rebasing `main`).
 
 ## Not your job here
 
