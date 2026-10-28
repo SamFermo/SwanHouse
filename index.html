@@ -953,9 +953,9 @@
   <!-- MAILING LIST -->
   <!-- The old Wix site collected signups on every page and the farm dinner copy sent
        people here for 2027 ticket announcements; the rebuilt site had no capture at
-       all, which would have quietly cost us every new subscriber. Writes to Firestore
-       subscribers/ — create-only from the browser, so the list can never be read back
-       out of a public page. Added 2026-08-05. -->
+       all, which would have quietly cost us every new subscriber. Posts to MailerLite
+       (one list for both sites). Added 2026-08-05 as a Firestore write; MailerLite
+       since 2026-10-27. -->
   <section class="signup" id="signup">
     <h3 data-copy="news.h3">Join the mailing list</h3>
     <p data-copy="news.p1">Farm dinner dates, openings when a seat comes back, and first word on next season's tickets. A few emails a year, nothing more.</p>
@@ -1258,16 +1258,12 @@
       if (window.__renderSeason) window.__renderSeason(model.length ? model : (window.__bakedSeason || []));
     };
 
-    // ---- Mailing list signup (rewired 2026-10-20) ---------------------------
-    // The submit listener is attached right away, before any network work, so a visitor
-    // can never submit into a plain page reload. It waits for Firebase; if Firebase never
-    // comes up (blocked scripts, App Check trouble, offline) the visitor is told to email
-    // instead, the same way the San Fermo form already behaves. subscribers/ is
-    // create-only for the browser, so the page can never read the list back.
+    // ---- Mailing list signup (rewired 2026-10-27 to MailerLite) -------------
+    // Posts straight to MailerLite; no longer depends on Firebase at all. If the post
+    // fails the visitor is told to email instead, same as the San Fermo form.
     let sigResolve, sigReject;
     const sigReady = new Promise((res, rej) => { sigResolve = res; sigReject = rej; });
     sigReady.catch(() => {});
-    setTimeout(() => sigReject(new Error('signup init timed out')), 15000);
     (function wireSignup() {
       const form = document.getElementById('signupForm');
       if (!form) return;
@@ -1287,14 +1283,15 @@
         }
         btn.disabled = true; msg.textContent = 'One moment…';
         try {
-          const { app, fs, db, auth } = await sigReady;
-          const a = auth.getAuth(app);
-          if (!a.currentUser) await auth.signInAnonymously(a);
-          await fs.addDoc(fs.collection(db, 'subscribers'), {
-            email: email,
-            source: 'swanhousefarm.com',
-            createdAt: new Date().toISOString()
-          });
+          // MailerLite form "Website signup (both sites)" -> Swan House Farm list group.
+          // Rewired 2026-10-27; was a Firestore subscribers/ write (backup beside this file).
+          var body = new FormData();
+          body.append('fields[email]', email);
+          body.append('ml-submit', '1');
+          body.append('anticsrf', 'true');
+          const r = await fetch('https://assets.mailerlite.com/jsonp/2748716/forms/202538465632454055/subscribe', { method: 'POST', body: body });
+          const j = await r.json();
+          if (!j || !j.success) throw new Error('mailerlite said no');
           form.style.display = 'none';
           msg.textContent = "You're on the list. We'll be in touch.";
         } catch (e) {
