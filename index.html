@@ -309,7 +309,9 @@
       transition: transform 0.6s ease;
     }
     .dinner-gallery-item:hover img { transform: scale(1.04); }
+    .dinner-gallery-item.gallery-fill { display: none; }
     @media (max-width: 768px) {
+      .dinner-gallery-item.gallery-fill { display: block; }
       .dinner-gallery-grid { grid-template-columns: repeat(2, 1fr); }
       .dinner-gallery-item.tall { grid-row: span 1; aspect-ratio: 1/1; }
     }
@@ -708,6 +710,10 @@
       </div>
       <div data-pool-slot="std" class="dinner-gallery-item">
         <img src="images/dessert-plating-800.jpg" alt="Plating dessert" loading="lazy">
+      </div>
+      <!-- 2026-11-02: eighth photo shows on phones and tablets only, so the two-column grid has no empty square -->
+      <div data-pool-slot="std" class="dinner-gallery-item gallery-fill">
+        <img src="images/reception-800.jpg" alt="Swan House Farm photo" loading="lazy">
       </div>
     </div>
   </div>
