@@ -1567,6 +1567,52 @@
   if (/[?&](edit|oobCode)\b/.test(location.search)) load();
 })();
 </script>
+<!-- ── CLICK COUNTER (2026-11-04) ── counts taps on the buttons that matter, one tally per site
+     per day in the farm database (clicks/<site>_<YYYY-MM-DD>), read by the staff portal. No
+     names, no cookies, nothing about the visitor: just "+1 opentable". The database only
+     accepts +1 on a known counter. Skipped in edit mode. Fails silently. -->
+<script>
+(function () {
+  var queue = [], send = null;
+  var other = window.SITE === 'sanfermo' ? 'swanhousefarm.com' : 'sanfermoseattle.com';
+  function kind(a) {
+    if (a.hasAttribute('data-reserve')) return 'reserve';
+    var h = a.getAttribute('href') || '';
+    if (/opentable\.com/i.test(h)) return 'opentable';
+    if (/chownow\.com/i.test(h)) return 'order';
+    if (/chargeitpro\.com/i.test(h)) return 'giftcards';
+    if (/gravitylink\.net/i.test(h)) return 'tickets';
+    if (/^mailto:/i.test(h)) return 'email';
+    if (/^tel:/i.test(h)) return 'call';
+    if (/instagram\.com/i.test(h)) return 'instagram';
+    if (h.indexOf(other) >= 0) return 'crosssite';
+    return null;
+  }
+  function count(k) {
+    if (!k || document.body.classList.contains('se-on')) return;
+    if (send) send(k); else if (queue.length < 20) queue.push(k);
+  }
+  document.addEventListener('click', function (e) {
+    var a = e.target && e.target.closest && e.target.closest('a[href], [data-reserve]');
+    if (a) count(kind(a));
+  }, true);
+  var form = document.getElementById('signupForm');
+  if (form) form.addEventListener('submit', function () {
+    var i = form.querySelector('input[type="email"], input'); if (i && /@/.test(i.value || '')) count('signup');
+  }, true);
+  document.addEventListener('sitecopy:loaded', async function () {
+    try {
+      var app = window.__siteCopyApp; if (!app) return;
+      var fs = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+      var db = fs.getFirestore(app);
+      var day = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date());
+      var ref = fs.doc(db, 'clicks', window.SITE + '_' + day);
+      send = function (k) { var o = {}; o[k] = fs.increment(1); fs.setDoc(ref, o, { merge: true }).catch(function () {}); };
+      queue.splice(0).forEach(send);
+    } catch (e) { /* counting is best-effort */ }
+  }, { once: true });
+})();
+</script>
 <!-- Cloudflare Web Analytics (2026-11-04): visits, pages, referrers, devices. No cookies. Dashboard: Cloudflare > Web analytics. -->
 <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "f7d348d13a6e4d349ae0fce4e87c342c"}'></script>
 </body>
