@@ -642,17 +642,17 @@
   <div class="land">
     <div class="land-grid fade-in">
       <div class="land-item">
-        <img src="images/lamb-800.jpg" alt="Spring lamb on pasture" loading="lazy">
+        <img src="images/lamb-800.jpg" data-rotate="images/lamb-800.jpg,images/land-livestock-pigs.jpg|1000218,images/land-livestock-sheep.jpg|1DfG4oznO-FyuWzgNTb6LOznSnJCB2fsQ,images/land-livestock-geese.jpg|1PedXZvuD__9bXJndoPXfxGFZq-sFy59G,images/land-livestock-ram.jpg|1LdAXczOPhYUcBs-cc35eU2mHy0Bk3AEe" alt="Spring lamb on pasture" loading="lazy">
         <h4 data-copy="raise.h1">Livestock</h4>
         <p data-copy="raise.p1">Corriedale, Suffolk and Southdown cross sheep. Grass-fed angus from our own pastures and neighbouring ranches on Pleasant Ridge. Apple and nut finished Duroc hogs. Free range ducks, chickens and geese. All raised on pasture, processed on-site or at local facilities.</p>
       </div>
       <div class="land-item">
-        <img src="images/greenhouse-800.jpg" alt="Greenhouse with spring seedlings" loading="lazy">
+        <img src="images/greenhouse-800.jpg" data-rotate="images/greenhouse-800.jpg,images/land-garden-hoophouse.jpg|10htJMmwQXjB4Hjq3wq8RM13ZGcEG60uv,images/land-garden-path.jpg|1vr4HT9TgDg76XcYO6arzn4UtamQMQaj0,images/land-garden-dahlia.jpg|1cfVXIj8nRS1hKCmXcq55P27QIpMcfQpB,images/land-garden-tunnel.jpg|1000234" alt="Greenhouse with spring seedlings" loading="lazy">
         <h4 data-copy="raise.h2">Orchard &amp; Garden</h4>
         <p data-copy="raise.p2">Apples, stone fruit, seasonal vegetables, herbs, flowers, and root crops. The market garden drives much of what appears on the San Fermo menu.</p>
       </div>
       <div class="land-item">
-        <img src="images/eggs-800.jpg" alt="Fresh farm eggs" loading="lazy">
+        <img src="images/eggs-800.jpg" data-rotate="images/eggs-800.jpg,images/bread-cheese-800.jpg|bread-cheese-800,images/land-prepared-board.jpg|1LtrbVe2xucN1PC4nL6mQ90TAJM_MBFxR,images/land-prepared-pastries.jpg|1cpdimUi_TD4A6XAbF6dhYtsrXXd52PUp" alt="Fresh farm eggs" loading="lazy">
         <h4 data-copy="raise.h3">Preserved &amp; Prepared</h4>
         <p data-copy="raise.p3">Pear and apple butter, preserves, pickles, herb salts, onion jam, and calendula healing salve. Available at the farm stand when open.</p>
       </div>
@@ -1486,6 +1486,28 @@
     console.log('sitecopy: error ' + (e && (e.code || e.message)));
   }
   done();
+})();
+</script>
+<!-- ── RAISE-ROW ROTATOR (2026-11-03) ── the three photos under Livestock / Orchard & Garden /
+     Preserved & Prepared each pick at random from their own hand-picked set on every load, so
+     the picture always matches its caption. Options: data-rotate="file|poolId,...". A pick that
+     duplicates a photo the gallery pool loader is showing gets swapped once the gallery fills. -->
+<script>
+(function () {
+  var imgs = Array.prototype.slice.call(document.querySelectorAll('img[data-rotate]'));
+  function opts(img) { return img.getAttribute('data-rotate').split(',').map(function (o) { var p = o.split('|'); return { file: p[0], id: p[1] || '' }; }); }
+  function shown() { return Array.prototype.map.call(document.querySelectorAll('[data-pool-slot] img'), function (i) { return i.getAttribute('src') || ''; }).join(' '); }
+  function pick(img, avoid) {
+    var list = opts(img).filter(function (o) { return !(o.id && avoid.indexOf(o.id) >= 0); });
+    if (!list.length) return;
+    var o = list[Math.floor(Math.random() * list.length)];
+    img.src = o.file; img.setAttribute('data-picked', o.id);
+  }
+  var g0 = shown(); imgs.forEach(function (img) { pick(img, g0); });
+  document.addEventListener('sitecopy:loaded', function () {
+    function fix() { var g = shown(); imgs.forEach(function (img) { var id = img.getAttribute('data-picked'); if (id && g.indexOf(id) >= 0) pick(img, g); }); }
+    setTimeout(fix, 500); setTimeout(fix, 2500);
+  }, { once: true });
 })();
 </script>
 <!-- ── POOL LOADER v1 ───────────────────────────────────────────────────────────
