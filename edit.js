@@ -407,7 +407,7 @@ async function openPanel(build) {
 function esc(v) { return String(v == null ? '' : v).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
 async function datesPanel(p) {
-  const { doc, getDoc, setDoc } = state.fs;
+  const { doc, getDoc } = state.fs;
   const [cur, sea] = await Promise.all([getDoc(doc(state.db, 'availability', 'current')), getDoc(doc(state.db, 'availability', 'season'))]);
   const rows = cur.exists() ? ((cur.data() || {}).dates || []) : [];
   const off = sea.exists() ? !!(sea.data() || {}).offSeason : (window.__farmOffSeasonDefault !== false);
@@ -438,9 +438,13 @@ async function datesPanel(p) {
     const offNow = p.querySelector('input[name=se-season]:checked').value === 'off';
     if (!payload && !offNow) { fail('Add at least one date before turning the season on.'); return; }
     try {
-      if (payload) await setDoc(doc(state.db, 'availability', 'current'), payload);
+      // One batch, so the dates and the on/off switch save together or not at all
+      // (2026-11-06, Odo review: two separate writes could leave half a change live).
       const seasonDoc = { offSeason: offNow, publishedAt: new Date().toISOString(), publishedBy: who };
-      await setDoc(doc(state.db, 'availability', 'season'), seasonDoc);
+      const batch = state.fs.writeBatch(state.db);
+      if (payload) batch.set(doc(state.db, 'availability', 'current'), payload);
+      batch.set(doc(state.db, 'availability', 'season'), seasonDoc);
+      await batch.commit();
       if (window.__applyAvailability) window.__applyAvailability(payload, seasonDoc);
       toast('Dinner dates saved. Guests see them on their next visit.'); p.remove();
     } catch (e) { fail("Couldn't save the dates: " + (e.code || e.message)); }

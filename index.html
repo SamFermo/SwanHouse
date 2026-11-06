@@ -554,11 +554,11 @@
     }
 
     /* ── ANIMATIONS ── */
-    .fade-in {
+    .js-anim .fade-in {
       opacity: 0; transform: translateY(20px);
       transition: opacity 0.8s ease, transform 0.8s ease;
     }
-    .fade-in.visible { opacity: 1; transform: translateY(0); }
+    .js-anim .fade-in.visible { opacity: 1; transform: translateY(0); }
   
     /* 2026-09-19 hero rework: one logo, front and center */
     .nav-logo { opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
@@ -578,8 +578,32 @@
     }
     .offseason-copy { font-family: var(--font-sans); font-size: 0.92rem; font-weight: 300; line-height: 1.7; color: var(--charcoal); margin: 0 0 0.9rem; }
     /* 2026-11-01 photo credit line in the footer (photographers credited per Sam) */
-    .photo-credit { opacity: 0.7; text-align: center; padding: 0 1rem; }
+    .photo-credit { opacity: 1; text-align: center; padding: 0 1rem; font-size: 0.8rem; color: rgba(255,255,255,0.72); }
+    /* ── 2026-11-06 Odo review fixes ── */
+    /* Footer easier to read on a phone */
+    footer { color: rgba(255,255,255,0.75); }
+    .footer-col p, .footer-col a { color: rgba(255,255,255,0.8); }
+    .footer-col h4 { color: rgba(255,255,255,0.6); }
+    .footer-social a { color: rgba(255,255,255,0.7); }
+    /* One button on the first screen: straight to the farm dinners */
+    .hero-cta { display: block; width: max-content; margin: 1.75rem auto 0; }
+    /* Hamburger stays visible on the light open menu */
+    .nav-toggle[aria-expanded="true"] span { background: var(--charcoal) !important; }
+    /* Collapsed FAQ answers are out of the tab order and hidden from screen readers (edit mode excepted) */
+    body:not(.se-on) .faq-item:not(.open) .faq-answer { visibility: hidden; transition: max-height 0.4s ease, padding 0.4s ease, visibility 0s linear 0.4s; }
+    /* Smaller photo for phones */
+    @media (max-width: 768px) { .hero-bg { background-image: url('images/hero-field-phone.jpg'); } }
+    @media (prefers-reduced-motion: reduce) {
+      .js-anim .fade-in { opacity: 1; transform: none; transition: none; }
+    }
   </style>
+  <script>
+    /* 2026-11-06 (Odo review): sections only start hidden for the fade-in once this flag is set,
+       and the flag comes off again if the fade-in script never confirms it is running.
+       No JavaScript, a script error or no IntersectionObserver = everything simply visible. */
+    document.documentElement.classList.add('js-anim');
+    setTimeout(function () { if (!window.__fadeReady) document.documentElement.classList.remove('js-anim'); }, 4000);
+  </script>
 </head>
 <body>
 
@@ -597,7 +621,7 @@
       <li><a href="https://www.sanfermoseattle.com" target="_blank" data-copy="nav.6">San Fermo</a></li>
       <li><a href="mailto:info@sanfermoseattle.com?subject=SHF%20General%20Inquiry" class="nav-cta" data-copy="nav.7">Contact Us</a></li>
     </ul>
-    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+    <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-controls="navLinks" aria-expanded="false">
       <span></span><span></span><span></span>
     </button>
   </nav>
@@ -610,6 +634,7 @@
       <h1><img class="hero-logo" src="images/logo-hero-white.png" alt="Swan House Farm"></h1>
       <p data-copy="hero.sub">La Conner, Washington</p>
       <span class="hero-sub"><span class="hl" data-copy="hero.line1">A family farm on the Skagit River</span><span class="hsep"> &ensp;|&ensp; </span><span class="hl" data-copy="hero.line2">34 acres of orchards, pastures &amp; woodlands</span></span>
+      <a href="#dinners" class="btn btn-primary hero-cta" data-copy="hero.btn">Farm Dinners</a>
     </div>
   </section>
 
@@ -1001,17 +1026,41 @@
     // Mobile toggle
     const toggle = document.getElementById('navToggle');
     const links = document.getElementById('navLinks');
-    toggle.addEventListener('click', () => links.classList.toggle('open'));
+    // 2026-11-06 (Odo review): the open/closed state is announced, Escape closes the menu and
+    // focus goes into the menu and back to the button, so it works without a mouse or with a screen reader.
+    function setMenu(open, refocus) {
+      links.classList.toggle('open', open);
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) { const first = links.querySelector('a'); if (first) first.focus({ preventScroll: true }); }
+      else if (refocus) toggle.focus();
+    }
+    toggle.addEventListener('click', () => setMenu(!links.classList.contains('open'), false));
     links.querySelectorAll('a').forEach(a => {
-      a.addEventListener('click', () => links.classList.remove('open'));
+      a.addEventListener('click', () => setMenu(false, false));
+    });
+    document.addEventListener('keydown', (e) => {
+      if (!links.classList.contains('open')) return;
+      if (e.key === 'Escape') { setMenu(false, true); return; }
+      if (e.key === 'Tab') {   // keep Tab inside the open menu: the links, then the close button (DOM order)
+        const items = Array.from(links.querySelectorAll('a')).filter(a => a.offsetParent !== null).concat([toggle]);
+        const i = items.indexOf(document.activeElement);
+        if (e.shiftKey && i <= 0) { e.preventDefault(); items[items.length - 1].focus(); }
+        else if (!e.shiftKey && i === items.length - 1) { e.preventDefault(); items[0].focus(); }
+      }
     });
     // FAQ
-    document.querySelectorAll('.faq-question').forEach(btn => {
+    document.querySelectorAll('.faq-question').forEach((btn, n) => {
+      const ans = btn.parentElement.querySelector('.faq-answer');
+      if (ans) { ans.id = ans.id || ('faq-a-' + (n + 1)); btn.setAttribute('aria-controls', ans.id); }
+      btn.setAttribute('aria-expanded', 'false');
       btn.addEventListener('click', () => {
         const item = btn.parentElement;
         const wasOpen = item.classList.contains('open');
-        document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
-        if (!wasOpen) item.classList.add('open');
+        document.querySelectorAll('.faq-item').forEach(i => {
+          i.classList.remove('open');
+          const q = i.querySelector('.faq-question'); if (q) q.setAttribute('aria-expanded', 'false');
+        });
+        if (!wasOpen) { item.classList.add('open'); btn.setAttribute('aria-expanded', 'true'); }
       });
     });
     // Fade in
@@ -1021,6 +1070,10 @@
       });
     }, { threshold: 0.15 });
     document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+    window.__fadeReady = true;   // tells the safety net in <head> the fade-in is running
+    // "Today" in Seattle, whatever timezone the visitor's phone is in (2026-11-06, Odo review).
+    // Dinner dates and farm stand closures are Washington dates.
+    window.__laToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date());
 
     /* ══ FARM DINNER SCHEDULE ══════════════════════════════════════════════════
        EDIT THIS LIST AND NOTHING ELSE when availability changes.
@@ -1087,7 +1140,27 @@
       if (window.__siteCopy && window.__applyCopy) window.__applyCopy(window.__siteCopy);
     }
 
+    /* Live dates couldn't be loaded (2026-11-06, Odo round 1). The baked SEASON list is last
+       year's and the on/off switch is unknown, so show neither: say so plainly, keep the
+       waitlist, no Buy Tickets (the payment form takes any date). */
+    function renderFailed(){
+      const set = (id, fn) => { const el = document.getElementById(id); if (el) fn(el); };
+      set('scheduleTitle', el => el.textContent = 'Farm Dinner Dates');
+      set('seasonBanner', el => el.innerHTML =
+        `<div class="season-banner"><strong>We couldn't load the dinner dates just now.</strong> ` +
+        `Please check back shortly, or email us and we'll tell you what's open.</div>`);
+      set('scheduleMonths', el => el.innerHTML = '');
+      set('scheduleLegend', el => el.textContent = '');
+      set('scheduleNote', el => el.style.display = '');
+      set('dinnerCta', el => el.innerHTML =
+        `<a href="${WAITLIST_URL.replace('Waitlist', 'Question')}" class="btn btn-primary">Email Us</a>` +
+        `<a href="${WAITLIST_URL}" class="btn btn-demoted">Join the Waitlist</a>`);
+      set('ctaCaution', el => el.textContent = '');
+      if (window.__siteCopy && window.__applyCopy) window.__applyCopy(window.__siteCopy);
+    }
+
     function renderSeason(SEASON){
+      if (window.__availState === 'failed') { renderFailed(); return; }
       if (OFF_SEASON) { renderOffSeason(); return; }
       // Undo what the off-season box hides, in case the season was just switched back on.
       { const t = document.getElementById('scheduleTitle'); if (t) t.textContent = SEASON_YEAR + ' Schedule';
@@ -1100,11 +1173,7 @@
          passes the page still announces "August 8 is all that's left" until
          somebody remembers to flip it. The schedule rows below are unaffected —
          past dates still render, exactly as before. */
-      const todayIso = (() => {
-        const n = new Date();
-        return n.getFullYear() + '-' + String(n.getMonth()+1).padStart(2,'0') +
-               '-' + String(n.getDate()).padStart(2,'0');
-      })();
+      const todayIso = window.__laToday();
       const MONTH_NUM = { January:1, February:2, March:3, April:4, May:5, June:6, July:7,
                           August:8, September:9, October:10, November:11, December:12 };
       const isPast = (monthName, d) => {
@@ -1137,17 +1206,29 @@
         ? 'Crossed-out dates have sold out.'
         : 'Every date this season has sold out.';
 
-      // Banner
+      // Banner. 2026-11-06 (Odo review): "Nearly sold out" only when few dates are left. A freshly
+      // released season (most dates open) says tickets are on sale and leads with Buy Tickets.
+      let upcoming = 0;
+      SEASON.forEach(m => m.dates.forEach(x => { if (!isPast(m.month, x.d)) upcoming++; }));
+      const nearly = open.length > 0 && open.length <= Math.max(2, Math.floor(upcoming / 3));
+      // Buy Tickets shows only once the published dates have actually loaded ('live'). While the
+      // read is pending the baked dates may be stale and the payment form takes any date, so no
+      // ticket button yet. A failed read never gets here: renderFailed() above.
+      const availState = window.__availState || 'pending';
+      const canSell = availState === 'live';
       let banner;
       if (!open.length) {
         banner = `<strong>The ${SEASON_YEAR} season is sold out.</strong> ` +
                  `Join the waitlist and we'll be in touch if a seat opens, and again when ` +
                  `${SEASON_YEAR + 1} dates are announced.`;
-      } else {
+      } else if (nearly) {
         const list = open.map(o => `${o.month} ${o.d}${o.note ? ` (${esc(o.note)})` : ''}`).join(', ');
         banner = `<strong>Nearly sold out.</strong> ${list} ` +
                  `${open.length === 1 ? 'is' : 'are'} all that's left for ${SEASON_YEAR}. ` +
                  `Everything else is gone, so the waitlist is the best way in.`;
+      } else {
+        banner = `<strong>${SEASON_YEAR} tickets are on sale.</strong> ` +
+                 `${open.length} dates are open. Crossed-out dates have sold out, and the rest tend to go quickly.`;
       }
       const bannerEl = document.getElementById('seasonBanner');
       if (bannerEl) bannerEl.innerHTML = `<div class="season-banner">${banner}</div>`;
@@ -1160,11 +1241,13 @@
       // that does not exist. It reappears on its own the moment a date is marked
       // open (Dinner Dates on the edit screen). Sam's call 2026-08-03, the day the 2026 season sold out.
       const ctaEl = document.getElementById('dinnerCta');
-      if (ctaEl) ctaEl.innerHTML =
-        `<a href="${WAITLIST_URL}" class="btn btn-primary">Join the Waitlist</a>` +
-        (open.length
-          ? `<a href="${TICKET_URL}" target="_blank" class="btn btn-demoted">Buy Tickets</a>`
-          : '');
+      if (ctaEl) ctaEl.innerHTML = (open.length && canSell && !nearly)
+        ? `<a href="${TICKET_URL}" target="_blank" class="btn btn-primary">Buy Tickets</a>` +
+          `<a href="${WAITLIST_URL}" class="btn btn-demoted">Join the Waitlist</a>`
+        : `<a href="${WAITLIST_URL}" class="btn btn-primary">Join the Waitlist</a>` +
+          (open.length && canSell
+            ? `<a href="${TICKET_URL}" target="_blank" class="btn btn-demoted">Buy Tickets</a>`
+            : '');
 
       const cautionEl = document.getElementById('ctaCaution');
       if (cautionEl) cautionEl.textContent = open.length
@@ -1237,8 +1320,7 @@
     // "season has ended" box still says the right year once next year's dates are entered.
     window.__applyAvailability = (cur, seasonDoc) => {
       const dates = (cur && cur.dates) || [];
-      const now = new Date();
-      const today = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+      const today = window.__laToday();
       const years = dates.map(x => +String(x.date || '').slice(0, 4)).filter(Boolean);
       const past = dates.filter(x => String(x.date) < today).map(x => +String(x.date).slice(0, 4));
       const off = (seasonDoc && typeof seasonDoc.offSeason === 'boolean') ? seasonDoc.offSeason : window.__farmOffSeasonDefault;
@@ -1249,6 +1331,9 @@
         : (past.length ? Math.max(...past) : Math.min(...years) - 1);
       window.__setFarmSeason(off, year);
       const model = toModel(dates);
+      // Live only when the season switch actually loaded AND, in season, real dates came back
+      // (2026-11-06, Odo round 1). Anything less keeps the fallback, shows the note, no tickets.
+      window.__availState = (seasonDoc && (off || model.length)) ? 'live' : 'failed';
       // A published-but-empty schedule must not wipe the dates off the page.
       if (window.__renderSeason) window.__renderSeason(model.length ? model : (window.__bakedSeason || []));
     };
@@ -1289,6 +1374,7 @@
           if (!j || !j.success) throw new Error('mailerlite said no');
           form.style.display = 'none';
           msg.textContent = "You're on the list. We'll be in touch.";
+          document.dispatchEvent(new CustomEvent('signup:ok'));
         } catch (e) {
           // Never claim success we did not get.
           btn.disabled = false;
@@ -1331,24 +1417,26 @@
         ]);
         window.__applyAvailability(snap.exists() ? snap.data() : null,
                                    ssnap && ssnap.exists() ? ssnap.data() : null);
-      } catch (e) { /* keep the baked-in schedule */ }
+      } catch (e) {
+        // Keep the baked-in schedule, but say so and hold the ticket button (2026-11-06).
+        window.__availState = 'failed';
+        if (window.__renderSeason) window.__renderSeason(window.__bakedSeason || []);
+      }
 
       // ---- Farm stand status --------------------------------------------
-      // A temporary closure carries an end date and the comparison happens HERE, on
-      // read. So the stand re-opens by itself the day after closedUntil and nobody
-      // has to remember to switch it back — which is the entire reason it exists.
+      // A temporary closure carries the day the stand is BACK OPEN ("Back open on" in the
+      // editor) and the comparison happens HERE, on read. So the stand re-opens by itself
+      // that morning and nobody has to remember to switch it back. (Before 2026-11-06 the
+      // test was >=, which kept it closed through the reopening day itself: Odo review.)
       try {
-        const fsnap = await fs.getDoc(fs.doc(db, 'farmstand', 'current'));
-        // Also called by the in-site editor right after a save.
+        // Also called by the in-site editor right after a save. Defined before the read
+        // (2026-11-06) so the editor can still use it if the read fails.
         window.__applyFarmstand = (d) => {
         const el = document.getElementById('farmstandStatus');
         if (d && el) {
           const esc = t => String(t == null ? '' : t)
             .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-          const now = new Date();
-          const todayIso = now.getFullYear() + '-' +
-            String(now.getMonth()+1).padStart(2,'0') + '-' +
-            String(now.getDate()).padStart(2,'0');
+          const todayIso = window.__laToday();
           const pretty = iso => {
             const p = String(iso).split('-');
             return new Date(+p[0], +p[1]-1, +p[2])
@@ -1359,7 +1447,7 @@
             cls = 'is-closed';
             html = '<strong>The farm stand is closed for the season.</strong>' +
                    (d.note ? ' ' + esc(d.note) : '');
-          } else if (d.closedUntil && String(d.closedUntil) >= todayIso) {
+          } else if (d.closedUntil && String(d.closedUntil) > todayIso) {
             cls = 'is-closed';
             html = '<strong>Temporarily closed.</strong> Back open ' +
                    esc(pretty(d.closedUntil)) + '.' +
@@ -1374,12 +1462,17 @@
           el.innerHTML = html;
         }
         };
+        const fsnap = await fs.getDoc(fs.doc(db, 'farmstand', 'current'));
         if (fsnap.exists()) window.__applyFarmstand(fsnap.data() || {});
       } catch (e) { /* keep the cautious fallback line */ }
 
     } catch (e) {
       sigReject(e);
-      /* keep the baked-in schedule and the fallback farm stand line */
+      /* keep the baked-in schedule and the fallback farm stand line, but say the dates may be stale */
+      if (window.__availState !== 'live') {
+        window.__availState = 'failed';
+        if (window.__renderSeason) window.__renderSeason(window.__bakedSeason || []);
+      }
     }
   })();
   </script>
@@ -1596,10 +1689,8 @@
     var a = e.target && e.target.closest && e.target.closest('a[href], [data-reserve]');
     if (a) count(kind(a));
   }, true);
-  var form = document.getElementById('signupForm');
-  if (form) form.addEventListener('submit', function () {
-    var i = form.querySelector('input[type="email"], input'); if (i && /@/.test(i.value || '')) count('signup');
-  }, true);
+  // 2026-11-06 (Odo review): a sign-up counts only once MailerLite has actually accepted it.
+  document.addEventListener('signup:ok', function () { count('signup'); });
   document.addEventListener('sitecopy:loaded', async function () {
     try {
       var app = window.__siteCopyApp; if (!app) return;
