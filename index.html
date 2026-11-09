@@ -1264,32 +1264,25 @@
   </script>
 
   <!-- ── LIVE AVAILABILITY ─────────────────────────────────────────────────────
-       The schedule above is now published from the Swan House Farm Portal, not
-       hand-edited here. A manager opens Dinner Dates, toggles a date open or sold
-       out, and hits Publish; that writes availability/current in the
-       swan-house-checkin project and this block reads it on page load.
+       The schedule above is published by the family from the site's own edit mode
+       (edit.js), which writes availability/current and availability/season in the
+       sanfermo-websites project (moved off swan-house-checkin 2026-11-08 so the
+       public sites never touch the guest database). This block reads it on load.
 
        The SEASON array above stays, and it is a REAL fallback: if Firestore is
-       down, App Check rejects us, or the guest is offline, the page renders
-       exactly as it did before. This block only ever replaces good content with
-       newer good content — it never blanks the schedule.
-
-       ⚠ AT DNS CUTOVER: swan-house-checkin has App Check ENFORCED, so this read
-       only succeeds from a domain registered on the reCAPTCHA Enterprise key
-       below. samfermo.github.io is already registered (the portal and the guest
-       pages share it). swanhousefarm.com IS NOT — add it to the key in the
-       Google Cloud console when DNS moves, or the site will quietly fall back to
-       the baked-in dates and Tim's publishing will stop reaching the public.
+       down or the guest is offline, the page renders exactly as it did before.
+       This block only ever replaces good content with newer good content — it
+       never blanks the schedule.
        Added 2026-08-03. ──────────────────────────────────────────────────────── -->
   <script type="module">
   (async () => {
     const CFG = {
-      apiKey: "AIzaSyDEOMCOO0EH1RV4vogLF4aOWD0e52dsOOI",
-      authDomain: "swan-house-checkin.firebaseapp.com",
-      projectId: "swan-house-checkin",
-      storageBucket: "swan-house-checkin.firebasestorage.app",
-      messagingSenderId: "743743999844",
-      appId: "1:743743999844:web:e124dd6fa5f791f87b7471"
+      apiKey: "AIzaSyCLy6F9DQCUb9jc3AC-VWlSvgAlnQFUMIM",
+      authDomain: "sanfermo-websites.firebaseapp.com",
+      projectId: "sanfermo-websites",
+      storageBucket: "sanfermo-websites.firebasestorage.app",
+      messagingSenderId: "1077584217667",
+      appId: "1:1077584217667:web:0216d61212179d583676f6"
     };
     const MONTHS = ['January','February','March','April','May','June','July',
                     'August','September','October','November','December'];
@@ -1395,8 +1388,8 @@
       // key as the portal and the guest pages.
       try {
         const ac = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js');
-        ac.initializeAppCheck(app, {
-          provider: new ac.ReCaptchaEnterpriseProvider('6LeCgjAtAAAAABX8x9jbb3tkOXmmQ5UvNZD1RL2_'),
+        if (window.SITE_APPCHECK_KEY) ac.initializeAppCheck(app, {
+          provider: new ac.ReCaptchaEnterpriseProvider(window.SITE_APPCHECK_KEY),
           isTokenAutoRefreshEnabled: true
         });
       } catch (e) { /* non-blocking; the read below may still work unenforced */ }
@@ -1480,7 +1473,7 @@
 <!-- ── SITE-COPY READER v1 ──────────────────────────────────────────────────────
      The words on this page can be edited in place by the family (footer, tap the
      copyright line five times, or add ?edit to the address). Edits are published to
-     Firestore site-copy/<site> in swan-house-checkin and this block overlays them on
+     Firestore site-copy/<site> in sanfermo-websites (split from swan-house-checkin 2026-11-08) and this block overlays them on
      load. The HTML above is the fallback and must stay current-ish: the nightly push
      bakes the published copy back into it.
 
@@ -1492,14 +1485,16 @@
   window.SITE = 'swanhouse';
   window.SITE_NAME = 'Swan House Farm';
   window.SITE_CFG = {
-    apiKey: "AIzaSyDEOMCOO0EH1RV4vogLF4aOWD0e52dsOOI",
-    authDomain: "swan-house-checkin.firebaseapp.com",
-    projectId: "swan-house-checkin",
-    storageBucket: "swan-house-checkin.firebasestorage.app",
-    messagingSenderId: "743743999844",
-    appId: "1:743743999844:web:e124dd6fa5f791f87b7471"
+    apiKey: "AIzaSyCLy6F9DQCUb9jc3AC-VWlSvgAlnQFUMIM",
+    authDomain: "sanfermo-websites.firebaseapp.com",
+    projectId: "sanfermo-websites",
+    storageBucket: "sanfermo-websites.firebasestorage.app",
+    messagingSenderId: "1077584217667",
+    appId: "1:1077584217667:web:0216d61212179d583676f6"
   };
-  window.SITE_APPCHECK_KEY = '6LeCgjAtAAAAABX8x9jbb3tkOXmmQ5UvNZD1RL2_';
+  // 2026-11-08: website data moved to its own project (sanfermo-websites), which has no App Check;
+  // the security rules do the protecting. Set a key here only if App Check is turned on there.
+  window.SITE_APPCHECK_KEY = null;
   // localhost is not on the reCAPTCHA key; a registered debug token lets local tests run.
   if (location.hostname === 'localhost') self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
 </script>
@@ -1561,7 +1556,7 @@
     const app = initializeApp(window.SITE_CFG, window.SITE + '-copy');
     try {
       const ac = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js');
-      ac.initializeAppCheck(app, {
+      if (window.SITE_APPCHECK_KEY) ac.initializeAppCheck(app, {
         provider: new ac.ReCaptchaEnterpriseProvider(window.SITE_APPCHECK_KEY),
         isTokenAutoRefreshEnabled: true
       });
