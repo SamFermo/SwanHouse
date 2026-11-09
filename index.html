@@ -1101,7 +1101,7 @@
       { month: 'September', dates: [ {d:5, status:'sold'}, {d:6, status:'sold'}, {d:12,status:'sold'}, {d:13,status:'sold'} ] },
     ];
 
-    const TICKET_URL  = 'https://gateway.gravitylink.net/interface/epayform/DkISwXpFde1LvPreJfJ1kBbwXDswqNVr/';
+    const TICKET_URL  = 'https://gateway.gravitylink.net/interface/epayform/zr4g8bxSeIJZSUnWO5mbdCVBUt9SmYN8/';
     const WAITLIST_URL = 'mailto:info@sanfermoseattle.com?subject=SHF%20Farm%20Dinner%20Waitlist';
 
     /* Rewritten 2026-08-03: renderSeason now takes a model instead of closing over
@@ -1668,7 +1668,8 @@
     var h = a.getAttribute('href') || '';
     if (/opentable\.com/i.test(h)) return 'opentable';
     if (/chownow\.com/i.test(h)) return 'order';
-    if (/chargeitpro\.com/i.test(h)) return 'giftcards';
+    // 2026-11-09: new gift card form lives on gravitylink.net too, so match its key before the tickets rule.
+    if (/chargeitpro\.com|V0tZLcVX9e2qMGpyQG74S0sFsVUQ2zVw/i.test(h)) return 'giftcards';
     if (/gravitylink\.net/i.test(h)) return 'tickets';
     if (/^mailto:/i.test(h)) return 'email';
     if (/^tel:/i.test(h)) return 'call';
